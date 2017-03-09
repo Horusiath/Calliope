@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.4
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{26CD2F4D-CA23-4682-B301-DDC936E8A66E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{3D56BF3B-F041-495B-BC5F-73E43137C76E}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope", "src\Calliope\Calliope.csproj", "{8A21215B-05B8-40E1-82D0-CFC73A2F4F22}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Tests", "src\Calliope.Tests\Calliope.Tests.csproj", "{949660DB-0DED-47F2-B590-129DF52EA418}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8A21215B-05B8-40E1-82D0-CFC73A2F4F22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A21215B-05B8-40E1-82D0-CFC73A2F4F22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A21215B-05B8-40E1-82D0-CFC73A2F4F22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A21215B-05B8-40E1-82D0-CFC73A2F4F22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{949660DB-0DED-47F2-B590-129DF52EA418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{949660DB-0DED-47F2-B590-129DF52EA418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{949660DB-0DED-47F2-B590-129DF52EA418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{949660DB-0DED-47F2-B590-129DF52EA418}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8A21215B-05B8-40E1-82D0-CFC73A2F4F22} = {26CD2F4D-CA23-4682-B301-DDC936E8A66E}
+		{949660DB-0DED-47F2-B590-129DF52EA418} = {26CD2F4D-CA23-4682-B301-DDC936E8A66E}
+	EndGlobalSection
+EndGlobal
