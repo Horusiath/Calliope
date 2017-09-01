@@ -1,16 +1,6 @@
 ﻿namespace Calliope.Replication
 {
-    public abstract class ReplicationNetwork
-    {
-        
-    }
-
-    public sealed class StaticReplicationNetwork : ReplicationNetwork
-    {
-    
-    }
-
-    public sealed class SpanningTree : ReplicationNetwork
+    public abstract class ReplicationGraph
     {
         
     }

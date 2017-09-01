@@ -17,20 +17,20 @@ namespace Calliope.Replication
 
     public struct ReplicationEndpointInfo : IEquatable<ReplicationEndpointInfo>
     {
-        public static readonly ReplicationEndpointInfo None = new ReplicationEndpointInfo(string.Empty, ImmutableDictionary<string, long>.Empty);
+        public static readonly ReplicationEndpointInfo None = new ReplicationEndpointInfo(ReplicationEndpoint.None, ImmutableDictionary<string, long>.Empty);
 
-        public string EndpointId { get; }
+        public ReplicationEndpoint Endpoint { get; }
         public ImmutableDictionary<string, long> JournalSequenceNumbers { get; }
 
-        public ReplicationEndpointInfo(string endpointId, ImmutableDictionary<string, long> journalSequenceNumbers)
+        public ReplicationEndpointInfo(ReplicationEndpoint endpoint, ImmutableDictionary<string, long> journalSequenceNumbers)
         {
-            EndpointId = endpointId;
+            Endpoint = endpoint;
             JournalSequenceNumbers = journalSequenceNumbers;
         }
 
         public bool Equals(ReplicationEndpointInfo other)
         {
-            if (!string.Equals(EndpointId, other.EndpointId)) return false;
+            if (!Endpoint.Equals(other.Endpoint)) return false;
             return JournalSequenceNumbers.DictionaryEquals(other.JournalSequenceNumbers);
         }
 
@@ -44,14 +44,14 @@ namespace Calliope.Replication
         {
             unchecked
             {
-                var hash = EndpointId.GetHashCode() * 397 ^ JournalSequenceNumbers.DictionaryHashCode();
+                var hash = Endpoint.GetHashCode() * 397 ^ JournalSequenceNumbers.DictionaryHashCode();
                 return hash;
             }
         }
 
         public override string ToString()
         {
-            var sb = new StringBuilder("ReplicationEndpointInfo(").Append(EndpointId).Append(", {");
+            var sb = new StringBuilder("ReplicationEndpointInfo(").Append(Endpoint).Append(", {");
             foreach (var entry in JournalSequenceNumbers)
             {
                 sb.Append(entry.Key).Append(": ").Append(entry.Value).AppendLine();

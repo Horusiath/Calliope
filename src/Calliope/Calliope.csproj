@@ -58,6 +58,7 @@
     <Compile Include="Replication\Broadcast.cs" />
     <Compile Include="Replication\Protocol.cs" />
     <Compile Include="Replication\ReliableCasualBroadcast.cs" />
+    <Compile Include="Replication\ReplicationEndpoint.cs" />
     <Compile Include="Replication\ReplicationNetwork.cs" />
     <Compile Include="Replication\TaggedReliableCasualBroadcast.cs" />
     <Compile Include="VectorTime.cs" />
