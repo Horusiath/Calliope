@@ -5,15 +5,15 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace Calliope.Versioning
+namespace Calliope
 {
     /// <summary>
     /// Vector time represented as map of replicaId -> logical time.
     /// </summary>
-    public struct VectorTime : IComparable<VectorTime>, IEquatable<VectorTime>, IMergeable<VectorTime>, IPartiallyComparable<VectorTime>, IComparable
+    public struct VectorTime : IComparable<VectorTime>, IEquatable<VectorTime>, IConvergent<VectorTime>, IPartiallyComparable<VectorTime>, IComparable
     {
         #region comparer
-        private class VectorTimeComparer : IPartialComparer<VectorTime>, IComparer<VectorTime>
+        private sealed class VectorTimeComparer : IPartialComparer<VectorTime>, IComparer<VectorTime>
         {
             public static readonly VectorTimeComparer Instance = new VectorTimeComparer();
 
@@ -84,9 +84,9 @@ namespace Calliope.Versioning
         /// <summary>
         /// A versioned vector time value - it consists of map of replicaId->logical time for each replica.
         /// </summary>
-        public readonly IImmutableDictionary<string, long> Value;
+        public readonly ImmutableDictionary<string, long> Value;
 
-        public VectorTime(IImmutableDictionary<string, long> value) : this()
+        public VectorTime(ImmutableDictionary<string, long> value) : this()
         {
             Value = value ?? ImmutableDictionary<string, long>.Empty;
         }
@@ -133,7 +133,7 @@ namespace Calliope.Versioning
                 : new VectorTime((Value ?? ImmutableDictionary<string, long>.Empty).SetItem(replicaId, 1L));
         }
 
-        /// <inheritdoc cref="IMergeable{T}"/>
+        /// <inheritdoc cref="IConvergent{T}"/>
         [Pure]
         public VectorTime Merge(VectorTime other)
         {
@@ -155,11 +155,7 @@ namespace Calliope.Versioning
 
         public bool Equals(VectorTime other) => VectorTimeComparer.Instance.PartiallyCompare(this, other) == 0;
 
-        public override bool Equals(object obj)
-        {
-            if (obj is VectorTime) return Equals((VectorTime)obj);
-            return false;
-        }
+        public override bool Equals(object obj) => (obj is VectorTime vtime) && Equals(vtime);
 
         public override int GetHashCode()
         {
@@ -183,7 +179,7 @@ namespace Calliope.Versioning
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(object obj)
         {
-            if (obj is VectorTime) return CompareTo((VectorTime)obj);
+            if (obj is VectorTime vtime) return CompareTo(vtime);
             else
             {
                 throw new ArgumentException($"Cannot compare values of type {GetType()} and {obj?.GetType()}");

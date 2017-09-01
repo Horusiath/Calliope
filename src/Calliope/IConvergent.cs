@@ -5,7 +5,7 @@
     /// method used for different replica conflict resolution.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public interface IMergeable<T>
+    public interface IConvergent<T> where T : IConvergent<T>
     {
         /// <summary>
         /// Merges current instance with another one, automatically and deterministically resolving all conflicts.

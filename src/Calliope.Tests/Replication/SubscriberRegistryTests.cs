@@ -108,7 +108,7 @@ namespace Calliope.Tests.Replication
                 var payload = payloads[i];
                 var replicaId = streamId + i;
                 var time = VectorTime.Create(replicaId);
-                var e = new DurableEvent(payload, replicaId, streamId, new VersionClock(time));
+                var e = new DurableEvent(payload, replicaId, streamId, new Version(time));
                 events[i] = e;
             }
 

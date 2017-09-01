@@ -149,7 +149,7 @@ namespace Calliope.Tests.Replication
                 correlationId));
 
         private static DurableEvent Event(object payload, VectorTime time) =>
-            new DurableEvent(payload, "emitter", null, new VersionClock(time));
+            new DurableEvent(payload, "emitter", null, new Versioning.Version(time));
 
         private static VectorTime VTime(long source, long target1, long target2) =>
             new VectorTime(

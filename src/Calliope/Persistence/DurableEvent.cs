@@ -1,41 +1,40 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using Calliope.Replication;
-using Calliope.Versioning;
 
 namespace Calliope.Persistence
 {
     /// <summary>
     /// Data structure used to pass information about events between replicas and persistent storage.
     /// </summary>
-    public class DurableEvent : IEquatable<DurableEvent>
+    public abstract class DurableEvent : IEquatable<DurableEvent>
     {
         /// <summary>
         /// Event defined by the end user.
         /// </summary>
-        public readonly object Payload;
+        protected object UntypedPayload { get; }
 
         /// <summary>
         /// Id of the replica that caused this event.
         /// </summary>
-        public readonly string ReplicaId;
+        public string ReplicaId { get; }
 
         /// <summary>
         /// Id of the globally-identified aggreagate stream, this event is associated with.
         /// </summary>
-        public readonly string StreamId;
+        public string StreamId { get; }
 
         /// <summary>
         /// VersionClock of an event. It can be tracked to achieve casual order of events.
         /// </summary>
-        public readonly VersionClock Version;
+        public Version Version { get; }
 
-        public DurableEvent(object payload, string replicaId, string streamId, VersionClock version)
+        protected DurableEvent(object payload, Version version, string streamId, string replicaId = null)
         {
-            Payload = payload;
-            ReplicaId = replicaId;
-            StreamId = streamId;
+            UntypedPayload = payload ?? throw new ArgumentNullException(nameof(payload));
             Version = version;
+            StreamId = streamId ?? throw new ArgumentNullException(nameof(streamId));
+            ReplicaId = replicaId;
         }
 
         /// <summary>
@@ -56,7 +55,7 @@ namespace Calliope.Persistence
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return Equals(Payload, other.Payload)
+            return Equals(UntypedPayload, other.UntypedPayload)
                 && string.Equals(ReplicaId, other.ReplicaId)
                 && string.Equals(StreamId, other.StreamId)
                 && Version.Equals(other.Version);
@@ -68,12 +67,22 @@ namespace Calliope.Persistence
         {
             unchecked
             {
-                var hashCode = (Payload != null ? Payload.GetHashCode() : 0);
+                var hashCode = (UntypedPayload != null ? UntypedPayload.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (ReplicaId.GetHashCode());
                 hashCode = (hashCode * 397) ^ (StreamId.GetHashCode());
                 hashCode = (hashCode * 397) ^ Version.GetHashCode();
                 return hashCode;
             }
         }
+    }
+
+    public sealed class DurableEvent<TPayload> : DurableEvent
+    {
+        public DurableEvent(object payload, string replicaId, string streamId, Version version)
+            : base(payload, version, streamId, replicaId)
+        {
+        }
+
+        public TPayload Payload => (TPayload)UntypedPayload;
     }
 }

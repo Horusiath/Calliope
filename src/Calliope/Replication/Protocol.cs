@@ -6,7 +6,6 @@ using System.Runtime.Serialization;
 using System.Text;
 using Akka.Actor;
 using Calliope.Persistence;
-using Calliope.Versioning;
 
 namespace Calliope.Replication
 {
@@ -1037,9 +1036,9 @@ namespace Calliope.Replication
 
     public sealed class AdjustClockSuccess : AdjustClockReply, IEquatable<AdjustClockSuccess>
     {
-        public VersionClock Clock { get; }
+        public Version Clock { get; }
 
-        public AdjustClockSuccess(VersionClock clock, int correlationId) : base(correlationId)
+        public AdjustClockSuccess(Version clock, int correlationId) : base(correlationId)
         {
             Clock = clock;
         }
@@ -1120,11 +1119,11 @@ namespace Calliope.Replication
 
     public class GetVersionReply : IReplicationReply, IEquatable<GetVersionReply>
     {
-        public VersionClock Clock { get; }
+        public Version Clock { get; }
 
         public int CorrelationId { get; }
 
-        public GetVersionReply(VersionClock clock, int correlationId)
+        public GetVersionReply(Version clock, int correlationId)
         {
             Clock = clock;
             CorrelationId = correlationId;

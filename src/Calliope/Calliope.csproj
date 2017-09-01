@@ -41,34 +41,34 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CollectionExtensions.cs" />
-    <Compile Include="CorrelatableRef.cs" />
+    <Compile Include="ConcurrentVersions.cs" />
     <Compile Include="Exceptions.cs" />
-    <Compile Include="IEventStream.cs" />
-    <Compile Include="IMergeable.cs" />
+    <Compile Include="Persistence\Journals\IEventStream.cs" />
+    <Compile Include="IConvergent.cs" />
     <Compile Include="IPartiallyComparable.cs" />
     <Compile Include="IReplyable.cs" />
     <Compile Include="Persistence\DurableEvent.cs" />
-    <Compile Include="Persistence\EventStream.cs" />
-    <Compile Include="Persistence\EventStreamSettings.cs" />
     <Compile Include="Persistence\Journals\IEventJournal.cs" />
+    <Compile Include="Persistence\Journals\IReplicatedEventStream.cs" />
+    <Compile Include="Persistence\Journals\PersistResult.cs" />
     <Compile Include="Persistence\Protocol.cs" />
     <Compile Include="Persistence\Snapshot.cs" />
     <Compile Include="Persistence\Snapshots\ISnapshotStore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Replication\FailureDetector.cs" />
-    <Compile Include="Replication\Notifications\NotificationChannel.cs" />
-    <Compile Include="Replication\Notifications\Registry.cs" />
-    <Compile Include="Replication\Notifications\SubscriberRegistry.cs" />
+    <Compile Include="Replication\Broadcast.cs" />
     <Compile Include="Replication\Protocol.cs" />
-    <Compile Include="Replication\ReplicationEndpoint.cs" />
-    <Compile Include="Replication\ReplicationFilter.cs" />
-    <Compile Include="Versioning\VectorTime.cs" />
-    <Compile Include="Versioning\VersionClock.cs" />
+    <Compile Include="Replication\ReliableCasualBroadcast.cs" />
+    <Compile Include="Replication\ReplicationNetwork.cs" />
+    <Compile Include="Replication\TaggedReliableCasualBroadcast.cs" />
+    <Compile Include="VectorTime.cs" />
+    <Compile Include="Version.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Replication\Notifications\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6' Or $(TargetFrameworkVersion) == 'v4.6.1' Or $(TargetFrameworkVersion) == 'v4.6.2' Or $(TargetFrameworkVersion) == 'v4.6.3')">

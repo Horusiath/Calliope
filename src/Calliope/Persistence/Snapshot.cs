@@ -1,5 +1,4 @@
 ﻿using System;
-using Calliope.Versioning;
 
 namespace Calliope.Persistence
 {
@@ -47,9 +46,9 @@ namespace Calliope.Persistence
     {
         public readonly object Payload;
         public readonly SnapshotMetadata Metadata;
-        public readonly VersionClock Version;
+        public readonly Version Version;
 
-        public Snapshot(object payload, SnapshotMetadata metadata, VersionClock version)
+        public Snapshot(object payload, SnapshotMetadata metadata, Version version)
         {
             Payload = payload;
             Metadata = metadata;
