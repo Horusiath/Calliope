@@ -40,7 +40,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CorrelatableRefTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Replication\FailureDetectorTests.cs" />
     <Compile Include="Replication\NotificationChannelTests.cs" />

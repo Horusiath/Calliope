@@ -38,4 +38,20 @@ namespace Calliope
         {
         }
     }
+
+    [Serializable]
+    public class ConcurrentUpdateException : AkkaException
+    {
+        public ConcurrentUpdateException()
+        {
+        }
+
+        public ConcurrentUpdateException(string message, Exception cause = null) : base(message, cause)
+        {
+        }
+
+        public ConcurrentUpdateException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
 }

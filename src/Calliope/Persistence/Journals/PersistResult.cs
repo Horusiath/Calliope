@@ -1,12 +1,19 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Calliope.Persistence.Journals
 {
     public sealed class PersistResult<TEvent>
     {
-        public ConcurrentVersions<TEvent> ConcurrentVersions { get; }
-        public bool ConcurrentUpdateDetected => ConcurrentVersions.Count > 1;
+        private readonly ImmutableArray<Versioned<TEvent>> versions;
 
+        internal PersistResult(ImmutableArray<Versioned<TEvent>> versions)
+        {
+            this.versions = versions;
+        }
+
+        public IEnumerable<Versioned<TEvent>> ConcurrentVersions => versions;
+        public bool ConcurrentUpdateDetected => versions.Length > 1;
     }
 }

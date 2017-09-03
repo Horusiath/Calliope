@@ -5,12 +5,14 @@ using System.Runtime.CompilerServices;
 namespace Calliope
 {
     /// <summary>
-    /// Version combines concurrent time recognized as <see cref="VectorTime"/>
-    /// with backtrack to <see cref="SystemTime"/> when concurrent changes has 
+    /// Version combines concurrent time recognized as <see cref="P:Calliope.Version.VectorTime" />
+    /// with backtrack to <see cref="P:Calliope.Version.SystemTime" /> when concurrent changes has 
     /// been recognized.
     /// </summary>
     public struct Version : IEquatable<Version>, IComparable<Version>, IComparable, IConvergent<Version>
     {
+        public static readonly Version Zero = new Version(DateTime.MinValue, VectorTime.Zero);
+
         /// <summary>
         /// Monotonically increasing number of local replica instance.
         /// </summary>
@@ -67,6 +69,12 @@ namespace Calliope
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator <(Version x, Version y) => x.CompareTo(y) == -1;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(Version x, Version y) => x.CompareTo(y) >= 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(Version x, Version y) => x.CompareTo(y) <= 0;
 
         public Version Merge(Version other)
         {
