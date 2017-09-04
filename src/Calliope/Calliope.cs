@@ -24,11 +24,6 @@ namespace Calliope
         {
             throw new NotImplementedException();
         }
-
-        public ICrdtService<T> GetCrdtService<T>(string key) where T : ICommutative<T>
-        {
-            throw new NotImplementedException();
-        }
     }
 
     internal sealed class CalliopeProvider : ExtensionIdProvider<Calliope>

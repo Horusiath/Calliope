@@ -231,3 +231,5 @@ target/
 
 # include self-signed test certificate for SSL Tests
 !src/core/Akka.Remote.Tests/Resources/akka-validcert.pfx
+
+.vs/**
