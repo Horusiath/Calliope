@@ -40,8 +40,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Calliope.cs" />
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="ICommutative.cs" />
     <Compile Include="Persistence\Journals\IEventStream.cs" />
     <Compile Include="IConvergent.cs" />
     <Compile Include="IPartiallyComparable.cs" />
@@ -56,7 +58,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Replication\Atomics.cs" />
     <Compile Include="Replication\Broadcast.cs" />
-    <Compile Include="Replication\IReplicator.cs" />
+    <Compile Include="Replication\Counter.cs" />
+    <Compile Include="Replication\ICrdtService.cs" />
     <Compile Include="Replication\Protocol.cs" />
     <Compile Include="Replication\ReliableCasualBroadcast.cs" />
     <Compile Include="Replication\ReplicationEndpoint.cs" />
