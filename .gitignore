@@ -22,6 +22,8 @@ us.stackdump
 *.user
 *.sln.docstates
 
+_old
+
 #MonoDevelop
 *.userprefs
 

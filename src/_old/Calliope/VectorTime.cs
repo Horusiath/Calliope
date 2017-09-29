@@ -1,27 +1,19 @@
-﻿#region copyright
-//-----------------------------------------------------------------------
-// <copyright file="VectorTime.cs" creator="Bartosz Sypytkowski">
-//     Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
-// </copyright>
-//-----------------------------------------------------------------------
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Calliope
 {
     /// <summary>
     /// Vector time represented as map of replicaId -> logical time.
     /// </summary>
-    public struct VectorTime : IEquatable<VectorTime>, IPartiallyComparable<VectorTime>
+    public struct VectorTime : IComparable<VectorTime>, IEquatable<VectorTime>, IConvergent<VectorTime>, IPartiallyComparable<VectorTime>, IComparable
     {
         #region comparer
-        private sealed class VectorTimeComparer : IPartialComparer<VectorTime>
+        private sealed class VectorTimeComparer : IPartialComparer<VectorTime>, IComparer<VectorTime>
         {
             public static readonly VectorTimeComparer Instance = new VectorTimeComparer();
 
@@ -54,9 +46,25 @@ namespace Calliope
 
                 return current;
             }
+
+            public int Compare(VectorTime x, VectorTime y)
+            {
+                var compareResult = PartiallyCompare(x, y);
+                if (compareResult.HasValue)
+                    return compareResult.Value;
+                else
+                {
+                    throw new InvalidOperationException($"State of {x} and {y} doesn't allow to compare those values");
+                }
+            }
         }
         #endregion
-        
+
+        /// <summary>
+        /// <see cref="IComparer{T}"/> instance for the <see cref="VectorTime"/>.
+        /// </summary>
+        public static readonly IComparer<VectorTime> Comparer = VectorTimeComparer.Instance;
+
         /// <summary>
         /// <see cref="IPartialComparer{T}"/> instance for the <see cref="VectorTime"/>
         /// </summary>
@@ -89,7 +97,7 @@ namespace Calliope
         /// Sets a <paramref name="localTime"/> value for target <paramref name="replicaId"/>, 
         /// returning new <see cref="VectorTime"/> in the result.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
         public VectorTime SetTime(string replicaId, long localTime) =>
             new VectorTime((Value ?? ImmutableDictionary<string, long>.Empty).SetItem(replicaId, localTime));
 
@@ -103,6 +111,7 @@ namespace Calliope
         /// Returns a new instance of the <see cref="VectorTime"/> containing 
         /// only information about target <paramref name="replicaId"/>.
         /// </summary>
+        [Pure]
         public VectorTime CopyOne(string replicaId)
         {
             long time;
@@ -115,6 +124,7 @@ namespace Calliope
         /// Increments a logical time value for a target <paramref name="replicaId"/>,
         /// returning new instance of <see cref="VectorTime"/> in the result.
         /// </summary>
+        [Pure]
         public VectorTime Increment(string replicaId)
         {
             long time;
@@ -123,12 +133,8 @@ namespace Calliope
                 : new VectorTime((Value ?? ImmutableDictionary<string, long>.Empty).SetItem(replicaId, 1L));
         }
 
-        /// <summary>
-        /// Merges current instance with another one, automatically and deterministically resolving all conflicts.
-        /// Merge operation should be associative, commutative and idempotent.
-        /// </summary>
-        /// <param name="other">Other instance of the same type.</param>
-        /// <returns></returns>
+        /// <inheritdoc cref="IConvergent{T}"/>
+        [Pure]
         public VectorTime Merge(VectorTime other)
         {
             var x = Value ?? ImmutableDictionary<string, long>.Empty;
@@ -141,29 +147,9 @@ namespace Calliope
         }
 
         /// <summary>
-        /// Subtracts dots from current vector time by removing all entries with a corresponding keys found
-        /// in <paramref name="other"/> vector time that have clock values &gt;= clock values of the current clock.
-        /// </summary>
-        /// <param name="other"></param>
-        /// <returns></returns>
-        public VectorTime Subtract(VectorTime other)
-        {
-            if (other.Value == null || other.Value.IsEmpty) return this;
-
-            var x = (Value ?? ImmutableDictionary<string, long>.Empty).ToBuilder();
-            foreach (var entry in other.Value)
-            {
-                if (x.TryGetValue(entry.Key, out var xval) && xval <= entry.Value)
-                    x.Remove(entry.Key);
-            }
-
-            return new VectorTime(x.ToImmutable());
-        }
-
-        /// <summary>
         /// Checks if current <see cref="VectorTime"/> in concurrent to provided one.
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsConcurrent(VectorTime other) =>
             !VectorTimeComparer.Instance.PartiallyCompare(this, other).HasValue;
 
@@ -186,7 +172,20 @@ namespace Calliope
         }
 
         public override string ToString() => $"VectorTime({string.Join("; ", Value.Select(p => $"{p.Key}:{p.Value}"))})";
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int CompareTo(VectorTime other) => VectorTimeComparer.Instance.Compare(this, other);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int CompareTo(object obj)
+        {
+            if (obj is VectorTime vtime) return CompareTo(vtime);
+            else
+            {
+                throw new ArgumentException($"Cannot compare values of type {GetType()} and {obj?.GetType()}");
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) == 0;
 

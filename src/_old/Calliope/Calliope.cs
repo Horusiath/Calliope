@@ -1,22 +1,28 @@
-﻿// #region copyright
-// -----------------------------------------------------------------------
-//  <copyright file="Calliope.cs" creator="Bartosz Sypytkowski">
-//      Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
-//  </copyright>
-// -----------------------------------------------------------------------
-// #endregion
-
+﻿using System;
 using Akka.Actor;
+using Calliope.Persistence.Journals;
+using Calliope.Persistence.Snapshots;
+using Calliope.Replication;
 
 namespace Calliope
 {
-    public sealed class Calliope : IExtension
+    public class Calliope: IExtension
     {
         public static Calliope Get(ActorSystem system) => system.WithExtension<Calliope, CalliopeProvider>();
 
         public Calliope(ExtendedActorSystem system)
         {
             
+        }
+
+        public IEventJournal GetEventJournal(string journalId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ISnapshotStore GetSnapshotStore(string snapshotStoreId)
+        {
+            throw new NotImplementedException();
         }
     }
 

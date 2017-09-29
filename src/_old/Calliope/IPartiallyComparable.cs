@@ -1,11 +1,4 @@
-﻿#region copyright
-//-----------------------------------------------------------------------
-// <copyright file="IPartiallyComparable.cs" creator="Bartosz Sypytkowski">
-//     Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
-// </copyright>
-//-----------------------------------------------------------------------
-#endregion
-namespace Calliope
+﻿namespace Calliope
 {
     /// <summary>
     /// Interface for types, that implements partial comparison. 
