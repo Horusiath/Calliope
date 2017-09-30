@@ -1,10 +1,10 @@
-﻿// #region copyright
+﻿#region copyright
 // -----------------------------------------------------------------------
 //  <copyright file="Calliope.cs" creator="Bartosz Sypytkowski">
 //      Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
 //  </copyright>
 // -----------------------------------------------------------------------
-// #endregion
+#endregion
 
 using Akka.Actor;
 

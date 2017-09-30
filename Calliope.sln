@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{26CD2F4D-CA23-4682-B301-DDC936E8A66E}"
 EndProject
@@ -13,13 +13,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{3D56
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{E55921B4-2C67-42A5-A1C4-86E653A7D8F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope", "src\Calliope\Calliope.csproj", "{CC2210D4-071B-4AA1-91AB-90B7437028AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope", "src\Calliope\Calliope.csproj", "{CC2210D4-071B-4AA1-91AB-90B7437028AF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Tests", "src\Calliope.Tests\Calliope.Tests.csproj", "{CB29FDCE-C344-447B-B253-B1A540979145}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope.Tests", "src\Calliope.Tests\Calliope.Tests.csproj", "{CB29FDCE-C344-447B-B253-B1A540979145}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Sql", "src\Calliope.Sql\Calliope.Sql.csproj", "{586578EF-089E-4AE1-A467-2BE13FB87FD3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope.Sql", "src\Calliope.Sql\Calliope.Sql.csproj", "{586578EF-089E-4AE1-A467-2BE13FB87FD3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Kafka", "src\Calliope.Kafka\Calliope.Kafka.csproj", "{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope.Kafka", "src\Calliope.Kafka\Calliope.Kafka.csproj", "{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Azure", "src\Calliope.Azure\Calliope.Azure.csproj", "{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,6 +45,10 @@ Global
 		{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -52,6 +58,7 @@ Global
 		{CB29FDCE-C344-447B-B253-B1A540979145} = {26CD2F4D-CA23-4682-B301-DDC936E8A66E}
 		{586578EF-089E-4AE1-A467-2BE13FB87FD3} = {E55921B4-2C67-42A5-A1C4-86E653A7D8F2}
 		{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD} = {E55921B4-2C67-42A5-A1C4-86E653A7D8F2}
+		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE} = {E55921B4-2C67-42A5-A1C4-86E653A7D8F2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6947D178-0C95-4193-9F5D-04DA104E5084}
