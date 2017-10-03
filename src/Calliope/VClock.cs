@@ -1,6 +1,6 @@
 ﻿#region copyright
 //-----------------------------------------------------------------------
-// <copyright file="VectorTime.cs" creator="Bartosz Sypytkowski">
+// <copyright file="VClock.cs" creator="Bartosz Sypytkowski">
 //     Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
 // </copyright>
 //-----------------------------------------------------------------------
@@ -11,25 +11,26 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Calliope
 {
+    using ReplicaId = String;
+
     /// <summary>
-    /// Vector time represented as map of replicaId -> logical time.
+    /// Vector clock represented as map of replicaId -> logical time.
     /// </summary>
-    public struct VectorTime : IEquatable<VectorTime>, IPartiallyComparable<VectorTime>
+    public struct VClock : IEquatable<VClock>, IPartiallyComparable<VClock>
     {
         #region comparer
-        private sealed class VectorTimeComparer : IPartialComparer<VectorTime>
+        private sealed class VectorTimeComparer : IPartialComparer<VClock>
         {
             public static readonly VectorTimeComparer Instance = new VectorTimeComparer();
 
             private VectorTimeComparer() { }
-            public int? PartiallyCompare(VectorTime x, VectorTime y)
+            public int? PartiallyCompare(VClock x, VClock y)
             {
-                var xval = x.Value ?? ImmutableDictionary<string, long>.Empty;
-                var yval = y.Value ?? ImmutableDictionary<string, long>.Empty;
+                var xval = x.Value ?? ImmutableDictionary<ReplicaId, long>.Empty;
+                var yval = y.Value ?? ImmutableDictionary<ReplicaId, long>.Empty;
                 var keys = xval.Keys.Union(yval.Keys).Distinct();
                 var current = 0;
                 foreach (var key in keys)
@@ -58,69 +59,69 @@ namespace Calliope
         #endregion
         
         /// <summary>
-        /// <see cref="IPartialComparer{T}"/> instance for the <see cref="VectorTime"/>
+        /// <see cref="IPartialComparer{T}"/> instance for the <see cref="VClock"/>
         /// </summary>
-        public static readonly IPartialComparer<VectorTime> EqualityComparer = VectorTimeComparer.Instance;
+        public static readonly IPartialComparer<VClock> EqualityComparer = VectorTimeComparer.Instance;
 
         /// <summary>
-        /// A zero value for <see cref="VectorTime"/>.
+        /// A zero value for <see cref="VClock"/>.
         /// </summary>
-        public static readonly VectorTime Zero = new VectorTime(ImmutableDictionary<string, long>.Empty);
+        public static readonly VClock Zero = new VClock(ImmutableDictionary<ReplicaId, long>.Empty);
 
         /// <summary>
-        /// Creates a new instance of a <see cref="VectorTime"/> with <paramref name="value"/> set for target replica.
+        /// Creates a new instance of a <see cref="VClock"/> with <paramref name="value"/> set for target replica.
         /// </summary>
-        public static VectorTime Create(string replicaId, long value = 1L) =>
-            new VectorTime(new KeyValuePair<string, long>(replicaId, value));
+        public static VClock Create(ReplicaId replicaId, long value = 1L) =>
+            new VClock(new KeyValuePair<ReplicaId, long>(replicaId, value));
 
         /// <summary>
         /// A versioned vector time value - it consists of map of replicaId->logical time for each replica.
         /// </summary>
-        public readonly ImmutableDictionary<string, long> Value;
+        public readonly ImmutableDictionary<ReplicaId, long> Value;
 
-        public VectorTime(ImmutableDictionary<string, long> value) : this()
+        public VClock(ImmutableDictionary<ReplicaId, long> value) : this()
         {
-            Value = value ?? ImmutableDictionary<string, long>.Empty;
+            Value = value ?? ImmutableDictionary<ReplicaId, long>.Empty;
         }
 
-        public VectorTime(params KeyValuePair<string, long>[] pairs) : this(ImmutableDictionary.CreateRange(pairs)) { }
+        public VClock(params KeyValuePair<ReplicaId, long>[] pairs) : this(ImmutableDictionary.CreateRange(pairs)) { }
 
         /// <summary>
         /// Sets a <paramref name="localTime"/> value for target <paramref name="replicaId"/>, 
-        /// returning new <see cref="VectorTime"/> in the result.
+        /// returning new <see cref="VClock"/> in the result.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public VectorTime SetTime(string replicaId, long localTime) =>
-            new VectorTime((Value ?? ImmutableDictionary<string, long>.Empty).SetItem(replicaId, localTime));
+        public VClock SetTime(ReplicaId replicaId, long localTime) =>
+            new VClock((Value ?? ImmutableDictionary<ReplicaId, long>.Empty).SetItem(replicaId, localTime));
 
         /// <summary>
         /// Returns a local time value for target <paramref name="replicaId"/> 
-        /// stored in current <see cref="VectorTime"/>.
+        /// stored in current <see cref="VClock"/>.
         /// </summary>
-        public long this[string replicaId] => Value?.GetValueOrDefault(replicaId, 0L) ?? 0L;
+        public long this[ReplicaId replicaId] => Value?.GetValueOrDefault(replicaId, 0L) ?? 0L;
 
         /// <summary>
-        /// Returns a new instance of the <see cref="VectorTime"/> containing 
+        /// Returns a new instance of the <see cref="VClock"/> containing 
         /// only information about target <paramref name="replicaId"/>.
         /// </summary>
-        public VectorTime CopyOne(string replicaId)
+        public VClock CopyOne(string replicaId)
         {
             long time;
             return Value != null && Value.TryGetValue(replicaId, out time)
-                ? new VectorTime(ImmutableDictionary.CreateRange(new[] { new KeyValuePair<string, long>(replicaId, time) }))
-                : new VectorTime(ImmutableDictionary<string, long>.Empty);
+                ? new VClock(ImmutableDictionary.CreateRange(new[] { new KeyValuePair<ReplicaId, long>(replicaId, time) }))
+                : new VClock(ImmutableDictionary<ReplicaId, long>.Empty);
         }
 
         /// <summary>
         /// Increments a logical time value for a target <paramref name="replicaId"/>,
-        /// returning new instance of <see cref="VectorTime"/> in the result.
+        /// returning new instance of <see cref="VClock"/> in the result.
         /// </summary>
-        public VectorTime Increment(string replicaId)
+        public VClock Increment(ReplicaId replicaId)
         {
             long time;
             return Value != null && Value.TryGetValue(replicaId, out time)
-                ? new VectorTime(Value.SetItem(replicaId, time + 1))
-                : new VectorTime((Value ?? ImmutableDictionary<string, long>.Empty).SetItem(replicaId, 1L));
+                ? new VClock(Value.SetItem(replicaId, time + 1))
+                : new VClock((Value ?? ImmutableDictionary<ReplicaId, long>.Empty).SetItem(replicaId, 1L));
         }
 
         /// <summary>
@@ -129,15 +130,15 @@ namespace Calliope
         /// </summary>
         /// <param name="other">Other instance of the same type.</param>
         /// <returns></returns>
-        public VectorTime Merge(VectorTime other)
+        public VClock Merge(VClock other)
         {
-            var x = Value ?? ImmutableDictionary<string, long>.Empty;
-            var y = other.Value ?? ImmutableDictionary<string, long>.Empty;
+            var x = Value ?? ImmutableDictionary<ReplicaId, long>.Empty;
+            var y = other.Value ?? ImmutableDictionary<ReplicaId, long>.Empty;
             var dict = x.Union(y)
-                .Aggregate(ImmutableDictionary<string, long>.Empty, (map, pair) =>
+                .Aggregate(ImmutableDictionary<ReplicaId, long>.Empty, (map, pair) =>
                     map.SetItem(pair.Key, Math.Max(map.GetValueOrDefault(pair.Key, long.MinValue), pair.Value)));
 
-            return new VectorTime(dict);
+            return new VClock(dict);
         }
 
         /// <summary>
@@ -146,30 +147,30 @@ namespace Calliope
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public VectorTime Subtract(VectorTime other)
+        public VClock Subtract(VClock other)
         {
             if (other.Value == null || other.Value.IsEmpty) return this;
 
-            var x = (Value ?? ImmutableDictionary<string, long>.Empty).ToBuilder();
+            var x = (Value ?? ImmutableDictionary<ReplicaId, long>.Empty).ToBuilder();
             foreach (var entry in other.Value)
             {
                 if (x.TryGetValue(entry.Key, out var xval) && xval <= entry.Value)
                     x.Remove(entry.Key);
             }
 
-            return new VectorTime(x.ToImmutable());
+            return new VClock(x.ToImmutable());
         }
 
         /// <summary>
-        /// Checks if current <see cref="VectorTime"/> in concurrent to provided one.
+        /// Checks if current <see cref="VClock"/> in concurrent to provided one.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsConcurrent(VectorTime other) =>
+        public bool IsConcurrent(VClock other) =>
             !VectorTimeComparer.Instance.PartiallyCompare(this, other).HasValue;
 
-        public bool Equals(VectorTime other) => VectorTimeComparer.Instance.PartiallyCompare(this, other) == 0;
+        public bool Equals(VClock other) => VectorTimeComparer.Instance.PartiallyCompare(this, other) == 0;
 
-        public override bool Equals(object obj) => (obj is VectorTime vtime) && Equals(vtime);
+        public override bool Equals(object obj) => (obj is VClock vtime) && Equals(vtime);
 
         public override int GetHashCode()
         {
@@ -185,27 +186,27 @@ namespace Calliope
             }
         }
 
-        public override string ToString() => $"VectorTime({string.Join("; ", Value.Select(p => $"{p.Key}:{p.Value}"))})";
+        public override string ToString() => $"{{{string.Join("; ", Value.Select(p => $"{p.Key}:{p.Value}"))}}}";
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator ==(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) == 0;
+        public static bool operator ==(VClock x, VClock y) => x.PartiallyCompareTo(y) == 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator !=(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) != 0;
+        public static bool operator !=(VClock x, VClock y) => x.PartiallyCompareTo(y) != 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator >(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) == 1;
+        public static bool operator >(VClock x, VClock y) => x.PartiallyCompareTo(y) == 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator <(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) == -1;
+        public static bool operator <(VClock x, VClock y) => x.PartiallyCompareTo(y) == -1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator <=(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) < 1;
+        public static bool operator <=(VClock x, VClock y) => x.PartiallyCompareTo(y) < 1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool operator >=(VectorTime x, VectorTime y) => x.PartiallyCompareTo(y) > -1;
+        public static bool operator >=(VClock x, VClock y) => x.PartiallyCompareTo(y) > -1;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int? PartiallyCompareTo(VectorTime other) => VectorTimeComparer.Instance.PartiallyCompare(this, other);
+        public int? PartiallyCompareTo(VClock other) => VectorTimeComparer.Instance.PartiallyCompare(this, other);
     }
 }

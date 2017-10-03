@@ -7,44 +7,29 @@
 #endregion
 
 using System;
+using System.Threading.Tasks;
+using Akka;
+using Akka.Streams.Dsl;
 
 namespace Calliope.Replication
 {
-    public interface IReplicationMessage { }
-    public interface IReplicationRequest<TMessage> : IReplicationMessage { }
-    public interface IReplicationResponse : IReplicationMessage { }
-
-    public sealed class Deliver<TMessage> : IReplicationRequest<TMessage>
+    public struct Durable<T>
     {
+        public string ChannelId { get; }
         public long SequenceNr { get; }
-        public TMessage Message { get; }
+        public Versioned<T> Versioned { get; }
 
-        public Deliver(long sequenceNr, TMessage message)
+        public Durable(string channelId, long sequenceNr, Versioned<T> versioned)
         {
+            ChannelId = channelId;
             SequenceNr = sequenceNr;
-            Message = message;
+            Versioned = versioned;
         }
     }
 
-    public sealed class DeliverySuccess : IReplicationResponse
+    internal interface IReplicatorStore
     {
-        public DeliverySuccess(long sequenceNr)
-        {
-            SequenceNr = sequenceNr;
-        }
-
-        public long SequenceNr { get; }
-    }
-
-    public sealed class DeliveryFailure : IReplicationResponse
-    {
-        public long SequenceNr { get; }
-        public Exception Cause { get; }
-
-        public DeliveryFailure(long sequenceNr, Exception cause)
-        {
-            SequenceNr = sequenceNr;
-            Cause = cause;
-        }
+        Source<Durable<T>, NotUsed> Replay<T>(string channelId);
+        Task Store<T>(Versioned<T> update);
     }
 }
