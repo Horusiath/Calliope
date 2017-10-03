@@ -14,7 +14,7 @@ using System.Runtime.CompilerServices;
 
 namespace Calliope
 {
-    using ReplicaId = String;
+    using ReplicaId = Int32;
 
     /// <summary>
     /// Vector clock represented as map of replicaId -> logical time.
@@ -104,7 +104,7 @@ namespace Calliope
         /// Returns a new instance of the <see cref="VClock"/> containing 
         /// only information about target <paramref name="replicaId"/>.
         /// </summary>
-        public VClock CopyOne(string replicaId)
+        public VClock CopyOne(ReplicaId replicaId)
         {
             long time;
             return Value != null && Value.TryGetValue(replicaId, out time)

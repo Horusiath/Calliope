@@ -14,7 +14,7 @@ using Akka.Actor;
 
 namespace Calliope.Replication
 {
-    using ReplicaId = Address;
+    using ReplicaId = Int32;
 
     public static class Replicator
     {
@@ -190,20 +190,24 @@ namespace Calliope.Replication
 
         public sealed class SendAck
         {
-            public SendAck(VClock version)
+            public ReplicaId ReplicaId { get; }
+            public VClock Version { get; }
+
+            public SendAck(ReplicaId replicaId, VClock version)
             {
+                ReplicaId = replicaId;
                 Version = version;
             }
-
-            public VClock Version { get; }
         }
 
         public sealed class Deliver<T>
         {
+            public ReplicaId Origin { get; }
             public Versioned<T> Versioned { get; }
 
-            public Deliver(Versioned<T> versioned)
+            public Deliver(ReplicaId origin, Versioned<T> versioned)
             {
+                Origin = origin;
                 Versioned = versioned;
             }
         }

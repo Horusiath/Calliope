@@ -12,10 +12,11 @@ using System.Linq;
 using Akka.Actor;
 using Akka.Cluster;
 using Akka.Event;
+using Akka.Util;
 
 namespace Calliope.Replication
 {
-    using ReplicaId = Address;
+    using ReplicaId = Int32;
     
     internal sealed class Replicator<T> : ReceiveActor
     {
@@ -40,6 +41,8 @@ namespace Calliope.Replication
         private ImmutableHashSet<Replicator.Send<T>> pendingDelivery = ImmutableHashSet<Replicator.Send<T>>.Empty;
         private ImmutableHashSet<Replicator.PendingAck<T>> pendingAcks = ImmutableHashSet<Replicator.PendingAck<T>>.Empty;
         
+        public Replicator(string replicaId) : this(MurmurHash.StringHash(replicaId)) { }
+
         public Replicator(ReplicaId myself)
         {
             this.myself = myself;
@@ -54,11 +57,10 @@ namespace Calliope.Replication
                     Context.ActorSelection(path).Tell(new Replicator.Invitation(myself, Self));
                 }
             });
-            Receive<ClusterEvent.MemberRemoved>(removed => members = members.Remove(removed.Member.Address));
             Receive<ClusterEvent.IMemberEvent>(_ => { /* ignore */ });
             Receive<Replicator.Broadcast<T>>(bcast =>
             {
-                var version = localVersion.Increment(cluster.SelfAddress.ToString());
+                var version = localVersion.Increment(myself);
                 var versioned = new Versioned<T>(version, bcast.Message);
                 var send = new Replicator.Send<T>(myself, versioned, ImmutableHashSet.Create(myself));
 
@@ -67,7 +69,7 @@ namespace Calliope.Replication
                 foreach (var member in members)
                     member.Value.Forward(send);
 
-                var pendingAck = new Replicator.PendingAck<T>(cluster.SelfAddress, versioned, DateTime.UtcNow, members.Keys.ToImmutableHashSet());
+                var pendingAck = new Replicator.PendingAck<T>(myself, versioned, DateTime.UtcNow, members.Keys.ToImmutableHashSet());
 
                 this.pendingAcks = pendingAcks.Add(pendingAck);
                 this.localVersion = version;
@@ -80,23 +82,21 @@ namespace Calliope.Replication
                 }
                 else
                 {
-                    var receivers = members.Remove(Sender.Path.Address);
+                    var receivers = members.Remove(send.Origin);
 
-                    var forward = send.UpdateSeenBy(Self.Path.Address);
+                    var forward = send.UpdateSeenBy(myself);
                     if (log.IsInfoEnabled) log.Info("Broadcasting message {0} to: {1}", forward, string.Join(", ", receivers));
 
                     foreach (var member in receivers)
                         member.Value.Forward(send);
 
-                    var ack = new Replicator.SendAck(send.Versioned.Version);
+                    var ack = new Replicator.SendAck(myself, send.Versioned.Version);
                     Sender.Tell(ack);
 
-                    Self.Forward(new Replicator.Deliver<T>(send.Versioned));
-
-                    var senderAddr = Sender.Path.Address;
-
-                    this.pendingDelivery = pendingDelivery.Add(new Replicator.Send<T>(senderAddr, send.Versioned));
-                    this.pendingAcks = pendingAcks.Add(new Replicator.PendingAck<T>(senderAddr, send.Versioned, DateTime.UtcNow, receivers.Keys.ToImmutableHashSet()));
+                    Self.Forward(new Replicator.Deliver<T>(send.Origin, send.Versioned));
+                    
+                    this.pendingDelivery = pendingDelivery.Add(send.UpdateSeenBy(myself));
+                    this.pendingAcks = pendingAcks.Add(new Replicator.PendingAck<T>(myself, send.Versioned, DateTime.UtcNow, receivers.Keys.ToImmutableHashSet()));
                 }
             });
             Receive<Replicator.SendAck>(ack =>
@@ -104,7 +104,7 @@ namespace Calliope.Replication
                 log.Info("Received ACK from {0} (version: {1})", Sender, ack.Version);
 
                 var pendingAck = this.pendingAcks.First(x => x.Versioned.Version == ack.Version);
-                var membersLeft = pendingAck.Members.Remove(Sender.Path.Address);
+                var membersLeft = pendingAck.Members.Remove(ack.ReplicaId);
 
                 this.pendingAcks = pendingAcks.Remove(pendingAck);
                 if (!membersLeft.IsEmpty) this.pendingAcks = pendingAcks.Add(pendingAck.WithMembers(membersLeft));
@@ -115,7 +115,7 @@ namespace Calliope.Replication
                 localVersion = t.Item1;
                 pendingDelivery = t.Item2;
 
-                remoteVersions = remoteVersions.SetItem(Sender.Path.Address, deliver.Versioned.Version);
+                remoteVersions = remoteVersions.SetItem(deliver.Origin, deliver.Versioned.Version);
                 latestStableVersion = UpdateStableVersion();
             });
             Receive<Replicator.Resend>(_ =>
@@ -202,6 +202,7 @@ namespace Calliope.Replication
             throw new NotImplementedException();
         }
 
+        //TODO: move it into easily testable class
         private bool ShouldBeDelivered(ReplicaId origin, VClock messageVersion)
         {
             var thisVer = localVersion.Value;
