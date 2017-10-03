@@ -7,8 +7,6 @@
 #endregion
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Akka.Actor;
@@ -18,257 +16,43 @@ using Akka.Event;
 namespace Calliope.Replication
 {
     using ReplicaId = Address;
-
-    public static class Replicator
-    {
-        public sealed class Sent<T> : IEquatable<Sent<T>>
-        {
-            public ReplicaId Target { get; }
-            public Versioned<T> Versioned { get; }
-
-            public Sent(ReplicaId target, Versioned<T> versioned)
-            {
-                Target = target;
-                Versioned = versioned;
-            }
-
-            public bool Equals(Sent<T> other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return Equals(Target, other.Target) && Versioned.Equals(other.Versioned);
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                return obj is Sent<T> && Equals((Sent<T>) obj);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    var hashCode = (Target != null ? Target.GetHashCode() : 0);
-                    hashCode = (hashCode * 397) ^ Versioned.GetHashCode();
-                    return hashCode;
-                }
-            }
-
-            public override string ToString() => $"Sent({Target}, {Versioned})";
-        }
-
-        public sealed class PendingAck<T> : IEquatable<PendingAck<T>>
-        {
-            private readonly int hashCode;
-            public ReplicaId Target { get; }
-            public Versioned<T> Versioned { get; }
-            public DateTime Timestamp { get; }
-            public ImmutableHashSet<ReplicaId> Members { get; }
-
-            public PendingAck(ReplicaId target, Versioned<T> versioned, DateTime timestamp, ImmutableHashSet<ReplicaId> members)
-            {
-                Target = target;
-                Versioned = versioned;
-                Timestamp = timestamp;
-                Members = members;
-
-                hashCode = HashCode();
-            }
-
-            public bool Equals(PendingAck<T> other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return Equals(Target, other.Target) 
-                    && Versioned.Equals(other.Versioned)
-                    && Timestamp.Equals(other.Timestamp) 
-                    && Members.SetEquals(other.Members);
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                return obj is PendingAck<T> && Equals((PendingAck<T>) obj);
-            }
-
-            public override int GetHashCode() => hashCode;
-
-            private int HashCode()
-            {
-                unchecked
-                {
-                    var hashCode = (Target != null ? Target.GetHashCode() : 0);
-                    hashCode = (hashCode * 397) ^ Versioned.GetHashCode();
-                    hashCode = (hashCode * 397) ^ Timestamp.GetHashCode();
-                    foreach (var address in Members)
-                    {
-                        hashCode = (hashCode * 397) ^ address.GetHashCode();
-                    }
-                    return hashCode;
-                }
-            }
-
-            public PendingAck<T> WithMembers(ImmutableHashSet<ReplicaId> members) => new PendingAck<T>(Target, Versioned, Timestamp, members);
-
-            public PendingAck<T> WithTimestamp(DateTime timestamp) => new PendingAck<T>(Target, Versioned, timestamp, Members);
-        }
-
-        public sealed class StableReq
-        {
-            public StableReq(IEnumerable<VClock> versions)
-            {
-                Versions = versions;
-            }
-
-            public IEnumerable<VClock> Versions { get; }
-        }
-
-        public sealed class StableRep
-        {
-            public StableRep(IEnumerable<VClock> versions)
-            {
-                Versions = versions;
-            }
-
-            public IEnumerable<VClock> Versions { get; }
-        }
-
-        public sealed class Broadcast<T>
-        {
-            public Broadcast(T message)
-            {
-                Message = message;
-            }
-
-            public T Message { get; }
-        }
-
-        public sealed class Subscribe
-        {
-            public Subscribe(IActorRef @ref, object ack = null)
-            {
-                Ref = @ref;
-                Ack = ack;
-            }
-
-            public IActorRef Ref { get; }
-            public object Ack { get; }
-        }
-
-        public sealed class Unsubscribe
-        {
-            public Unsubscribe(IActorRef @ref, object ack = null)
-            {
-                Ref = @ref;
-                Ack = ack;
-            }
-
-            public IActorRef Ref { get; }
-            public object Ack { get; }
-        }
-
-        public sealed class Send<T> : IEquatable<Send<T>>
-        {
-            public Versioned<T> Versioned { get; }
-            public ImmutableHashSet<ReplicaId> SeenBy { get; }
-
-            public Send(Versioned<T> versioned, ImmutableHashSet<ReplicaId> seenBy)
-            {
-                Versioned = versioned;
-                SeenBy = seenBy;
-            }
-
-            public Send<T> UpdateSeenBy(ReplicaId address) => new Send<T>(Versioned, SeenBy.Add(address));
-
-            public bool Equals(Send<T> other)
-            {
-                if (ReferenceEquals(null, other)) return false;
-                if (ReferenceEquals(this, other)) return true;
-                return Versioned.Equals(other.Versioned)
-                    && SeenBy.SequenceEqual(other.SeenBy);
-            }
-
-            public override bool Equals(object obj)
-            {
-                if (ReferenceEquals(null, obj)) return false;
-                if (ReferenceEquals(this, obj)) return true;
-                return obj is Send<T> send && Equals(send);
-            }
-
-            public override int GetHashCode()
-            {
-                unchecked
-                {
-                    var hashCode = Versioned.GetHashCode();
-                    foreach (var address in SeenBy)
-                    {
-                        hashCode = (hashCode * 397) ^ address.GetHashCode();
-                    }
-                    return hashCode;
-                }
-            }
-
-            public override string ToString() => $"Send({Versioned}, seenBy:{string.Join(", ", SeenBy)})";
-        }
-
-        public sealed class SendAck
-        {
-            public SendAck(VClock version)
-            {
-                Version = version;
-            }
-
-            public VClock Version { get; }
-        }
-
-        public sealed class Deliver<T>
-        {
-            public Versioned<T> Versioned { get; }
-
-            public Deliver(Versioned<T> versioned)
-            {
-                Versioned = versioned;
-            }
-        }
-
-        public sealed class Resend
-        {
-            public static Resend Instance { get; } = new Resend();
-            private Resend() { }
-        }
-    }
     
     internal sealed class Replicator<T> : ReceiveActor
     {
         private readonly ILoggingAdapter log = Context.GetLogger();
         private readonly Cluster cluster = Cluster.Get(Context.System);
+        private readonly ICancelable resendTask;
 
         // settings
         private readonly TimeSpan checkRetryInterval = TimeSpan.FromSeconds(10);
         private readonly TimeSpan retryTimeout = TimeSpan.FromSeconds(10);
         private readonly string role = null;
-        private readonly ICancelable resendTask;
+        private readonly string replicatorRelativePath;
+        private readonly ReplicaId myself;
 
         // state
-
         private VClock localVersion = VClock.Zero;
         private VClock latestStableVersion = VClock.Zero;
         private ImmutableDictionary<ReplicaId, VClock> remoteVersions = ImmutableDictionary<ReplicaId, VClock>.Empty;
-        private ImmutableHashSet<ReplicaId> members = ImmutableHashSet<ReplicaId>.Empty;
+        private ImmutableDictionary<ReplicaId, IActorRef> members = ImmutableDictionary<ReplicaId, IActorRef>.Empty;
         private ImmutableHashSet<IActorRef> subscribers = ImmutableHashSet<IActorRef>.Empty;
 
-        private ImmutableHashSet<Replicator.Sent<T>> pendingDelivery = ImmutableHashSet<Replicator.Sent<T>>.Empty;
+        private ImmutableHashSet<Replicator.Send<T>> pendingDelivery = ImmutableHashSet<Replicator.Send<T>>.Empty;
         private ImmutableHashSet<Replicator.PendingAck<T>> pendingAcks = ImmutableHashSet<Replicator.PendingAck<T>>.Empty;
         
-        public Replicator()
+        public Replicator(ReplicaId myself)
         {
+            this.myself = myself;
+            replicatorRelativePath = Self.Path.ToStringWithoutAddress();
+
             Receive<ClusterEvent.MemberUp>(up =>
             {
                 if (HasRole(up.Member) && up.Member.Address != cluster.SelfAddress)
-                    members = members.Add(up.Member.Address);
+                {
+                    // send invitation to a new member
+                    var path = up.Member.Address.ToString() + replicatorRelativePath;
+                    Context.ActorSelection(path).Tell(new Replicator.Invitation(myself, Self));
+                }
             });
             Receive<ClusterEvent.MemberRemoved>(removed => members = members.Remove(removed.Member.Address));
             Receive<ClusterEvent.IMemberEvent>(_ => { /* ignore */ });
@@ -276,14 +60,14 @@ namespace Calliope.Replication
             {
                 var version = localVersion.Increment(cluster.SelfAddress.ToString());
                 var versioned = new Versioned<T>(version, bcast.Message);
-                var send = new Replicator.Send<T>(versioned, ImmutableHashSet.Create(Self.Path.Address));
+                var send = new Replicator.Send<T>(myself, versioned, ImmutableHashSet.Create(myself));
 
                 if (log.IsInfoEnabled) log.Info("Sending {0} to: {1}", send, string.Join(", ", members));
 
-                foreach (var address in members)
-                    Send(send, address);
+                foreach (var member in members)
+                    member.Value.Forward(send);
 
-                var pendingAck = new Replicator.PendingAck<T>(cluster.SelfAddress, versioned, DateTime.UtcNow, members);
+                var pendingAck = new Replicator.PendingAck<T>(cluster.SelfAddress, versioned, DateTime.UtcNow, members.Keys.ToImmutableHashSet());
 
                 this.pendingAcks = pendingAcks.Add(pendingAck);
                 this.localVersion = version;
@@ -301,8 +85,8 @@ namespace Calliope.Replication
                     var forward = send.UpdateSeenBy(Self.Path.Address);
                     if (log.IsInfoEnabled) log.Info("Broadcasting message {0} to: {1}", forward, string.Join(", ", receivers));
 
-                    foreach (var address in receivers)
-                        Send(send, address);
+                    foreach (var member in receivers)
+                        member.Value.Forward(send);
 
                     var ack = new Replicator.SendAck(send.Versioned.Version);
                     Sender.Tell(ack);
@@ -311,8 +95,8 @@ namespace Calliope.Replication
 
                     var senderAddr = Sender.Path.Address;
 
-                    this.pendingDelivery = pendingDelivery.Add(new Replicator.Sent<T>(senderAddr, send.Versioned));
-                    this.pendingAcks = pendingAcks.Add(new Replicator.PendingAck<T>(senderAddr, send.Versioned, DateTime.UtcNow, receivers));
+                    this.pendingDelivery = pendingDelivery.Add(new Replicator.Send<T>(senderAddr, send.Versioned));
+                    this.pendingAcks = pendingAcks.Add(new Replicator.PendingAck<T>(senderAddr, send.Versioned, DateTime.UtcNow, receivers.Keys.ToImmutableHashSet()));
                 }
             });
             Receive<Replicator.SendAck>(ack =>
@@ -343,15 +127,21 @@ namespace Calliope.Replication
                     if (now - ack.Timestamp > retryTimeout)
                     {
                         builder.Remove(ack);
-                        var send = new Replicator.Send<T>(ack.Versioned, ImmutableHashSet.Create(Self.Path.Address));
-                        foreach (var member in ack.Members)
+                        var send = new Replicator.Send<T>(myself, ack.Versioned, ImmutableHashSet.Create(myself));
+                        foreach (var replicaId in ack.Members)
                         {
-                            Send(send, member);
+                            if (members.TryGetValue(replicaId, out var member)) 
+                                member.Tell(send);
                         }
                         builder.Add(ack.WithTimestamp(now));
                     }
                 }
                 pendingAcks = builder.ToImmutable();
+            });
+            Receive<Replicator.Invitation>(invitation =>
+            {
+                members = members.Add(invitation.ReplicaId, invitation.ReplicatorRef);
+                Context.Watch(invitation.ReplicatorRef);
             });
             Receive<Replicator.StableReq>(sync =>
             {
@@ -368,7 +158,12 @@ namespace Calliope.Replication
                 subscribers = subscribers.Remove(unsubscribe.Ref);
                 if (unsubscribe.Ack != null) unsubscribe.Ref.Tell(unsubscribe.Ack);
             });
-            Receive<Terminated>(terminated => subscribers = subscribers.Remove(terminated.ActorRef));
+            Receive<Terminated>(terminated =>
+            {
+                subscribers = subscribers.Remove(terminated.ActorRef);
+                var replicaId = members.FirstOrDefault(kv => Equals(kv.Value, terminated.ActorRef));
+                members = members.Remove(replicaId.Key);
+            });
 
             resendTask = Context.System.Scheduler
                 .ScheduleTellOnceCancelable(checkRetryInterval, Self, Replicator.Resend.Instance, ActorRefs.NoSender);
@@ -380,13 +175,7 @@ namespace Calliope.Replication
         }
 
         private bool AlreadySeen(VClock version) => localVersion >= version || pendingDelivery.Any(x => x.Versioned.Version == version);
-
-        private void Send(Replicator.Send<T> send, ReplicaId member)
-        {
-            var targetPath = Self.Path.ToStringWithAddress(member);
-            Context.ActorSelection(targetPath).Tell(send, Sender);
-        }
-
+        
         protected override void PreStart()
         {
             cluster.Subscribe(Self, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, typeof(ClusterEvent.IMemberEvent));
@@ -403,16 +192,42 @@ namespace Calliope.Replication
         private bool HasRole(Member member) => string.IsNullOrEmpty(role) || member.Roles.Contains(role);
 
         #region tagged reliable casual broadcast
-
-
+        
         /// <summary>
         /// Check and possibly deliver a message if it should be delivered.
         /// </summary>
         /// <returns></returns>
-        private Tuple<VClock, ImmutableHashSet<Replicator.Sent<T>>> CasuallyDeliver()
+        private Tuple<VClock, ImmutableHashSet<Replicator.Send<T>>> CasuallyDeliver()
         {
             throw new NotImplementedException();
         }
+
+        private bool ShouldBeDelivered(ReplicaId origin, VClock messageVersion)
+        {
+            var thisVer = localVersion.Value;
+            var otherVer = messageVersion.Value;
+            var result = true;
+            foreach ((var key, var value) in otherVer)
+            {
+                if (thisVer.TryGetValue(key, out var thisVal))
+                {
+                    if (key == origin)
+                    {
+                        result = result && (value == thisVal + 1);
+                    }
+                    else
+                    {
+                        result = result && (value <= thisVal);
+                    }
+                }
+                else
+                {
+                    result = result && key == origin && value == 1;
+                }
+            }
+            return result;
+        }
+
         #endregion
     }
 }
