@@ -143,26 +143,34 @@ namespace Calliope.Replication
 
         public sealed class Send<T> : IEquatable<Send<T>>
         {
+            /// <summary>
+            /// Replica id of the replicator, which has initialized this message to be broadcasted.
+            /// </summary>
             public ReplicaId Origin { get; }
-            public Versioned<T> Versioned { get; }
-            public ImmutableHashSet<ReplicaId> SeenBy { get; }
 
-            public Send(ReplicaId origin, Versioned<T> versioned, ImmutableHashSet<ReplicaId> seenBy)
+            /// <summary>
+            /// Replica id of the last replicator, which has send current message. 
+            /// Effectively more performant equivalent of <see cref="IActorContext.Sender"/>.
+            /// </summary>
+            public ReplicaId LastSeenBy { get; }
+            public Versioned<T> Versioned { get; }
+
+            public Send(ReplicaId origin, ReplicaId lastSeenBy, Versioned<T> versioned)
             {
                 Origin = origin;
+                LastSeenBy = lastSeenBy;
                 Versioned = versioned;
-                SeenBy = seenBy;
             }
-
-            public Send<T> UpdateSeenBy(ReplicaId address) => new Send<T>(Origin, Versioned, SeenBy.Add(address));
+            
+            public Send<T> WithLastSeenBy(ReplicaId lastSender) => new Send<T>(Origin, lastSender, Versioned);
 
             public bool Equals(Send<T> other)
             {
                 if (ReferenceEquals(null, other)) return false;
                 if (ReferenceEquals(this, other)) return true;
                 return Origin == other.Origin
-                    && Versioned.Equals(other.Versioned)
-                    && SeenBy.SequenceEqual(other.SeenBy);
+                    && LastSeenBy == other.LastSeenBy
+                    && Versioned.Equals(other.Versioned);
             }
 
             public override bool Equals(object obj)
@@ -177,15 +185,12 @@ namespace Calliope.Replication
                 unchecked
                 {
                     var hashCode = (Origin.GetHashCode() * 397) ^ Versioned.GetHashCode();
-                    foreach (var address in SeenBy)
-                    {
-                        hashCode = (hashCode * 397) ^ address.GetHashCode();
-                    }
+                    hashCode = (hashCode * 397) ^ LastSeenBy.GetHashCode();
                     return hashCode;
                 }
             }
 
-            public override string ToString() => $"Send(origin: {Origin}, message: {Versioned.Message}, version:{Versioned.Version}, seenBy:{string.Join(", ", SeenBy)})";
+            public override string ToString() => $"Send(origin: {Origin}, lastSeenBy: {LastSeenBy}, message: {Versioned.Message}, version:{Versioned.Version})";
         }
 
         public sealed class SendAck

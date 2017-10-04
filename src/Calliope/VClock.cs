@@ -125,8 +125,8 @@ namespace Calliope
         }
 
         /// <summary>
-        /// Merges current instance with another one, automatically and deterministically resolving all conflicts.
-        /// Merge operation should be associative, commutative and idempotent.
+        /// Merges current instance with another one, automatically and deterministically resolving all conflicts
+        /// as maximum between conflicting values. Merge operation should be associative, commutative and idempotent.
         /// </summary>
         /// <param name="other">Other instance of the same type.</param>
         /// <returns></returns>
@@ -137,6 +137,23 @@ namespace Calliope
             var dict = x.Union(y)
                 .Aggregate(ImmutableDictionary<ReplicaId, long>.Empty, (map, pair) =>
                     map.SetItem(pair.Key, Math.Max(map.GetValueOrDefault(pair.Key, long.MinValue), pair.Value)));
+
+            return new VClock(dict);
+        }
+
+        /// <summary>
+        /// Merges current instance with another one, automatically and deterministically resolving all conflicts
+        /// as a minumum between conflicting values. Merge operation should be associative, commutative and idempotent.
+        /// </summary>
+        /// <param name="other">Other instance of the same type.</param>
+        /// <returns></returns>
+        public VClock MergeMin(VClock other)
+        {
+            var x = Value ?? ImmutableDictionary<ReplicaId, long>.Empty;
+            var y = other.Value ?? ImmutableDictionary<ReplicaId, long>.Empty;
+            var dict = x.Union(y)
+                .Aggregate(ImmutableDictionary<ReplicaId, long>.Empty, (map, pair) =>
+                    map.SetItem(pair.Key, Math.Min(map.GetValueOrDefault(pair.Key, long.MinValue), pair.Value)));
 
             return new VClock(dict);
         }

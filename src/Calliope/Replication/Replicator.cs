@@ -7,6 +7,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Akka.Actor;
@@ -17,7 +18,7 @@ using Akka.Util;
 namespace Calliope.Replication
 {
     using ReplicaId = Int32;
-    
+
     internal sealed class Replicator<T> : ReceiveActor
     {
         private readonly ILoggingAdapter log = Context.GetLogger();
@@ -34,13 +35,15 @@ namespace Calliope.Replication
         // state
         private VClock localVersion = VClock.Zero;
         private VClock latestStableVersion = VClock.Zero;
+
+        // TODO: replace with matrix clock
         private ImmutableDictionary<ReplicaId, VClock> remoteVersions = ImmutableDictionary<ReplicaId, VClock>.Empty;
         private ImmutableDictionary<ReplicaId, IActorRef> members = ImmutableDictionary<ReplicaId, IActorRef>.Empty;
         private ImmutableHashSet<IActorRef> subscribers = ImmutableHashSet<IActorRef>.Empty;
 
-        private ImmutableHashSet<Replicator.Send<T>> pendingDelivery = ImmutableHashSet<Replicator.Send<T>>.Empty;
+        private ImmutableHashSet<Replicator.Deliver<T>> pendingDelivery = ImmutableHashSet<Replicator.Deliver<T>>.Empty;
         private ImmutableHashSet<Replicator.PendingAck<T>> pendingAcks = ImmutableHashSet<Replicator.PendingAck<T>>.Empty;
-        
+
         public Replicator(string replicaId) : this(MurmurHash.StringHash(replicaId)) { }
 
         public Replicator(ReplicaId myself)
@@ -62,7 +65,7 @@ namespace Calliope.Replication
             {
                 var version = localVersion.Increment(myself);
                 var versioned = new Versioned<T>(version, bcast.Message);
-                var send = new Replicator.Send<T>(myself, versioned, ImmutableHashSet.Create(myself));
+                var send = new Replicator.Send<T>(myself, myself, versioned);
 
                 if (log.IsInfoEnabled) log.Info("Sending {0} to: {1}", send, string.Join(", ", members));
 
@@ -78,24 +81,24 @@ namespace Calliope.Replication
             {
                 if (AlreadySeen(send.Versioned.Version))
                 {
-                    log.Info("Received duplicate message {0} from {1}", send, Sender);
+                    log.Info("Received duplicate message {0}", send);
                 }
                 else
                 {
                     var receivers = members.Remove(send.Origin);
 
-                    var forward = send.UpdateSeenBy(myself);
-                    if (log.IsInfoEnabled) log.Info("Broadcasting message {0} to: {1}", forward, string.Join(", ", receivers));
+                    var forward = send.WithLastSeenBy(myself);
+                    if (log.IsInfoEnabled) log.Info("Broadcasting message {0} to: {1}", forward, string.Join(", ", receivers.Values));
 
-                    foreach (var member in receivers)
-                        member.Value.Forward(send);
-
-                    var ack = new Replicator.SendAck(myself, send.Versioned.Version);
-                    Sender.Tell(ack);
-
-                    Self.Forward(new Replicator.Deliver<T>(send.Origin, send.Versioned));
+                    foreach (var member in receivers.Values)
+                        member.Forward(forward);
                     
-                    this.pendingDelivery = pendingDelivery.Add(send.UpdateSeenBy(myself));
+                    Sender.Tell(new Replicator.SendAck(myself, send.Versioned.Version));
+
+                    var deliver = new Replicator.Deliver<T>(send.Origin, send.Versioned);
+                    Self.Forward(deliver);
+
+                    this.pendingDelivery = pendingDelivery.Add(deliver);
                     this.pendingAcks = pendingAcks.Add(new Replicator.PendingAck<T>(myself, send.Versioned, DateTime.UtcNow, receivers.Keys.ToImmutableHashSet()));
                 }
             });
@@ -111,12 +114,10 @@ namespace Calliope.Replication
             });
             Receive<Replicator.Deliver<T>>(deliver =>
             {
-                var t = CasuallyDeliver(); //TODO: implement
-                localVersion = t.Item1;
-                pendingDelivery = t.Item2;
+                TryToCasuallyDeliver(deliver); 
 
                 remoteVersions = remoteVersions.SetItem(deliver.Origin, deliver.Versioned.Version);
-                latestStableVersion = UpdateStableVersion();
+                latestStableVersion = UpdateStableVersion(remoteVersions);
             });
             Receive<Replicator.Resend>(_ =>
             {
@@ -127,10 +128,10 @@ namespace Calliope.Replication
                     if (now - ack.Timestamp > retryTimeout)
                     {
                         builder.Remove(ack);
-                        var send = new Replicator.Send<T>(myself, ack.Versioned, ImmutableHashSet.Create(myself));
+                        var send = new Replicator.Send<T>(myself, myself, ack.Versioned);
                         foreach (var replicaId in ack.Members)
                         {
-                            if (members.TryGetValue(replicaId, out var member)) 
+                            if (members.TryGetValue(replicaId, out var member))
                                 member.Tell(send);
                         }
                         builder.Add(ack.WithTimestamp(now));
@@ -169,13 +170,17 @@ namespace Calliope.Replication
                 .ScheduleTellOnceCancelable(checkRetryInterval, Self, Replicator.Resend.Instance, ActorRefs.NoSender);
         }
 
-        private VClock UpdateStableVersion()
+        /// <summary>
+        /// Returns latests stable version which is an aggregate of the least values of all known remote versions times for individual replica id.
+        /// </summary>
+        private static VClock UpdateStableVersion(ImmutableDictionary<ReplicaId, VClock> versions)
         {
-            throw new NotImplementedException();
+            var first = versions.First().Value;
+            return versions.Values.Aggregate(first, (c1, c2) => c1.MergeMin(c2));
         }
 
         private bool AlreadySeen(VClock version) => localVersion >= version || pendingDelivery.Any(x => x.Versioned.Version == version);
-        
+
         protected override void PreStart()
         {
             cluster.Subscribe(Self, ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, typeof(ClusterEvent.IMemberEvent));
@@ -192,41 +197,52 @@ namespace Calliope.Replication
         private bool HasRole(Member member) => string.IsNullOrEmpty(role) || member.Roles.Contains(role);
 
         #region tagged reliable casual broadcast
-        
+
         /// <summary>
         /// Check and possibly deliver a message if it should be delivered.
         /// </summary>
         /// <returns></returns>
-        private Tuple<VClock, ImmutableHashSet<Replicator.Send<T>>> CasuallyDeliver()
+        private bool TryToCasuallyDeliver(Replicator.Deliver<T> delivery)
         {
-            throw new NotImplementedException();
+            if (ShouldBeDelivered(delivery.Origin, localVersion, delivery.Versioned.Version))
+            {
+                foreach (var subscriber in subscribers)
+                {
+                    subscriber.Tell(delivery.Versioned);
+                }
+
+                pendingDelivery = pendingDelivery.Remove(delivery);
+                localVersion = localVersion.Increment(delivery.Origin);
+
+                return true;
+            }
+            return false;
         }
 
         //TODO: move it into easily testable class
-        private bool ShouldBeDelivered(ReplicaId origin, VClock messageVersion)
+        private bool ShouldBeDelivered(ReplicaId origin, VClock local, VClock remote)
         {
-            var thisVer = localVersion.Value;
-            var otherVer = messageVersion.Value;
-            var result = true;
-            foreach ((var key, var value) in otherVer)
+            var thisVer = local.Value;
+            foreach ((var key, var value) in remote.Value)
             {
                 if (thisVer.TryGetValue(key, out var thisVal))
                 {
                     if (key == origin)
                     {
-                        result = result && (value == thisVal + 1);
+                        if (value != thisVal + 1) return false;
                     }
                     else
                     {
-                        result = result && (value <= thisVal);
+                        if (value > thisVal) return false;
                     }
                 }
-                else
+                else if (!(key == origin && value == 1))
                 {
-                    result = result && key == origin && value == 1;
+                    return false;
                 }
             }
-            return result;
+
+            return true;
         }
 
         #endregion
