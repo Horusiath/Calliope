@@ -1,6 +1,6 @@
 ﻿#region copyright
 // -----------------------------------------------------------------------
-//  <copyright file="MVRegister.cs" creator="Bartosz Sypytkowski">
+//  <copyright file="BoundedCounter.cs" creator="Bartosz Sypytkowski">
 //      Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -8,10 +8,9 @@
 namespace Calliope.Collections
 {
     /// <summary>
-    /// Multi-value Register.
+    /// Bounded counter.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class MVRegister<T> : ICommutative
+    public class BoundedCounter : ICommutative
     {
         
     }

@@ -11,29 +11,28 @@ using System.Collections.Generic;
 
 namespace Calliope.Sql
 {
+    using ReplicaId = Int32;
+
     public interface IEventRow
     {
         string StreamId { get; }
-        string ReplicaId { get; }
-        DateTime SystemTimestamp { get; }
-        IReadOnlyDictionary<string, ulong> VectorTimestamp { get; }
+        ReplicaId ReplicaId { get; }
+        VClock Timestamp { get; }
     }
 
     public sealed class PayloadRow : IEventRow
     {
         public string StreamId { get; }
-        public string ReplicaId { get; }
-        public DateTime SystemTimestamp { get; }
-        public IReadOnlyDictionary<string, ulong> VectorTimestamp { get; }
+        public ReplicaId ReplicaId { get; }
+        public VClock Timestamp { get; }
         public int SerializerId { get; }
         public byte[] Payload { get; }
 
-        public PayloadRow(string streamId, string replicaId, DateTime systemTimestamp, IReadOnlyDictionary<string, ulong> vectorTimestamp, int serializerId, byte[] payload)
+        public PayloadRow(string streamId, ReplicaId replicaId, VClock timestamp, int serializerId, byte[] payload)
         {
             StreamId = streamId;
             ReplicaId = replicaId;
-            SystemTimestamp = systemTimestamp;
-            VectorTimestamp = vectorTimestamp;
+            Timestamp = timestamp;
             SerializerId = serializerId;
             Payload = payload;
         }
@@ -42,17 +41,15 @@ namespace Calliope.Sql
     public sealed class JsonRow : IEventRow
     {
         public string StreamId { get; }
-        public string ReplicaId { get; }
-        public DateTime SystemTimestamp { get; }
-        public IReadOnlyDictionary<string, ulong> VectorTimestamp { get; }
+        public ReplicaId ReplicaId { get; }
+        public VClock Timestamp { get; }
         public string JsonPayload { get; }
 
-        public JsonRow(string streamId, string replicaId, DateTime systemTimestamp, IReadOnlyDictionary<string, ulong> vectorTimestamp, string jsonPayload)
+        public JsonRow(string streamId, ReplicaId replicaId, VClock timestamp, string jsonPayload)
         {
             StreamId = streamId;
             ReplicaId = replicaId;
-            SystemTimestamp = systemTimestamp;
-            VectorTimestamp = vectorTimestamp;
+            Timestamp = timestamp;
             JsonPayload = jsonPayload;
         }
     }

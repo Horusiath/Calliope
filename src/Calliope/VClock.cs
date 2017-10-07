@@ -67,7 +67,7 @@ namespace Calliope
         /// A zero value for <see cref="VClock"/>.
         /// </summary>
         public static readonly VClock Zero = new VClock(ImmutableDictionary<ReplicaId, long>.Empty);
-
+        
         /// <summary>
         /// Creates a new instance of a <see cref="VClock"/> with <paramref name="value"/> set for target replica.
         /// </summary>

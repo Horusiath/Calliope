@@ -7,7 +7,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Akka.Actor;
@@ -220,7 +219,7 @@ namespace Calliope.Replication
         }
 
         //TODO: move it into easily testable class
-        private bool ShouldBeDelivered(ReplicaId origin, VClock local, VClock remote)
+        public static bool ShouldBeDelivered(ReplicaId origin, VClock local, VClock remote)
         {
             var thisVer = local.Value;
             foreach ((var key, var value) in remote.Value)

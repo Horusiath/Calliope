@@ -1,17 +1,13 @@
 ﻿#region copyright
 // -----------------------------------------------------------------------
-//  <copyright file="MVRegister.cs" creator="Bartosz Sypytkowski">
+//  <copyright file="SqliteDialect.cs" creator="Bartosz Sypytkowski">
 //      Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
 //  </copyright>
 // -----------------------------------------------------------------------
 #endregion
-namespace Calliope.Collections
+namespace Calliope.Sql.Dialects
 {
-    /// <summary>
-    /// Multi-value Register.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class MVRegister<T> : ICommutative
+    public class SqliteDialect<TRow> : AbstractSqlDialect<TRow> where TRow : IEventRow
     {
         
     }

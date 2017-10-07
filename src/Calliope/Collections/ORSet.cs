@@ -7,7 +7,20 @@
 #endregion
 namespace Calliope.Collections
 {
-    public class ORSet<T>
+    /// <summary>
+    /// Observed Remove Set.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class ORSet<T> : ICommutative
+    {
+        
+    }
+
+    /// <summary>
+    /// Add-wins Observed Remove Set.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public sealed class AWORSet<T> : ORSet<T>
     {
         
     }
