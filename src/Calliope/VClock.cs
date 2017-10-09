@@ -203,7 +203,7 @@ namespace Calliope
             }
         }
 
-        public override string ToString() => $"{{{string.Join("; ", Value.Select(p => $"{p.Key}:{p.Value}"))}}}";
+        public override string ToString() => $"{{{string.Join(", ", Value.Select(p => $"{p.Key}:{p.Value}"))}}}";
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(VClock x, VClock y) => x.PartiallyCompareTo(y) == 0;

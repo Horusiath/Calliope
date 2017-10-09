@@ -48,6 +48,6 @@ namespace Calliope.Replication
             }
         }
 
-        public override string ToString() => $"<message:{Message}, ver:{Version}>";
+        public override string ToString() => $"<message:{Message}, version:{Version}>";
     }
 }

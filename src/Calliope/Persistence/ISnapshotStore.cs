@@ -12,8 +12,5 @@ namespace Calliope.Persistence
 {
     public interface ISnapshotStore<T>
     {
-        Task<SnapshotOffer<T>> LoadAsync();
-        Task<SnapshotOffer<T>> LoadAsync(SnapshotSelectionCriteria criteria);
-        Task SaveAsync(T snapshot);
     }
 }

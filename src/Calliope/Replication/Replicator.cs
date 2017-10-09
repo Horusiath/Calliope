@@ -1,6 +1,6 @@
 ﻿#region copyright
 // -----------------------------------------------------------------------
-//  <copyright file="Replicator.cs" creator="Bartosz Sypytkowski">
+//  <copyright file="cs" creator="Bartosz Sypytkowski">
 //      Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -38,8 +38,8 @@ namespace Calliope.Replication
         private ImmutableDictionary<ReplicaId, IActorRef> members = ImmutableDictionary<ReplicaId, IActorRef>.Empty;
         private ImmutableHashSet<IActorRef> subscribers = ImmutableHashSet<IActorRef>.Empty;
 
-        private ImmutableHashSet<Replicator.Deliver<T>> pendingDelivery = ImmutableHashSet<Replicator.Deliver<T>>.Empty;
-        private ImmutableHashSet<Replicator.PendingAck<T>> pendingAcks = ImmutableHashSet<Replicator.PendingAck<T>>.Empty;
+        private ImmutableHashSet<Deliver<T>> pendingDelivery = ImmutableHashSet<Deliver<T>>.Empty;
+        private ImmutableHashSet<PendingAck<T>> pendingAcks = ImmutableHashSet<PendingAck<T>>.Empty;
 
         public Replicator(string replicaId, ReplicatorSettings settings) 
             : this(MurmurHash.StringHash(replicaId), settings) { }
@@ -56,27 +56,27 @@ namespace Calliope.Replication
                 {
                     // send invitation to a new member
                     var path = up.Member.Address.ToString() + replicatorRelativePath;
-                    Context.ActorSelection(path).Tell(new Replicator.Invitation(myself, Self));
+                    Context.ActorSelection(path).Tell(new Invitation(myself, Self));
                 }
             });
             Receive<ClusterEvent.IMemberEvent>(_ => { /* ignore */ });
-            Receive<Replicator.Broadcast<T>>(bcast =>
+            Receive<Broadcast<T>>(bcast =>
             {
                 var version = localVersion.Increment(myself);
                 var versioned = new Versioned<T>(version, bcast.Message);
-                var send = new Replicator.Send<T>(myself, myself, versioned);
+                var send = new Send<T>(myself, myself, versioned);
 
                 if (log.IsInfoEnabled) log.Info("Sending {0} to: {1}", send, string.Join(", ", members));
 
                 foreach (var member in members)
                     member.Value.Forward(send);
 
-                var pendingAck = new Replicator.PendingAck<T>(myself, versioned, DateTime.UtcNow, members.Keys.ToImmutableHashSet());
+                var pendingAck = new PendingAck<T>(myself, versioned, DateTime.UtcNow, members.Keys.ToImmutableHashSet());
 
                 this.pendingAcks = pendingAcks.Add(pendingAck);
                 this.localVersion = version;
             });
-            Receive<Replicator.Send<T>>(send =>
+            Receive<Send<T>>(send =>
             {
                 if (AlreadySeen(send.Versioned.Version))
                 {
@@ -92,16 +92,16 @@ namespace Calliope.Replication
                     foreach (var member in receivers.Values)
                         member.Forward(forward);
                     
-                    Sender.Tell(new Replicator.SendAck(myself, send.Versioned.Version));
+                    Sender.Tell(new SendAck(myself, send.Versioned.Version));
 
-                    var deliver = new Replicator.Deliver<T>(send.Origin, send.Versioned);
+                    var deliver = new Deliver<T>(send.Origin, send.Versioned);
                     Self.Forward(deliver);
 
                     this.pendingDelivery = pendingDelivery.Add(deliver);
-                    this.pendingAcks = pendingAcks.Add(new Replicator.PendingAck<T>(myself, send.Versioned, DateTime.UtcNow, receivers.Keys.ToImmutableHashSet()));
+                    this.pendingAcks = pendingAcks.Add(new PendingAck<T>(myself, send.Versioned, DateTime.UtcNow, receivers.Keys.ToImmutableHashSet()));
                 }
             });
-            Receive<Replicator.SendAck>(ack =>
+            Receive<SendAck>(ack =>
             {
                 log.Info("Received ACK from {0} (version: {1})", Sender, ack.Version);
 
@@ -111,14 +111,14 @@ namespace Calliope.Replication
                 this.pendingAcks = pendingAcks.Remove(pendingAck);
                 if (!membersLeft.IsEmpty) this.pendingAcks = pendingAcks.Add(pendingAck.WithMembers(membersLeft));
             });
-            Receive<Replicator.Deliver<T>>(deliver =>
+            Receive<Deliver<T>>(deliver =>
             {
                 TryToCasuallyDeliver(deliver); 
 
                 remoteVersions = remoteVersions.SetItem(deliver.Origin, deliver.Versioned.Version);
                 latestStableVersion = UpdateStableVersion(remoteVersions);
             });
-            Receive<Replicator.Resend>(_ =>
+            Receive<Resend>(_ =>
             {
                 var now = DateTime.UtcNow;
                 var builder = pendingAcks.ToBuilder();
@@ -127,7 +127,7 @@ namespace Calliope.Replication
                     if (now - ack.Timestamp > settings.RetryTimeout)
                     {
                         builder.Remove(ack);
-                        var send = new Replicator.Send<T>(myself, myself, ack.Versioned);
+                        var send = new Send<T>(myself, myself, ack.Versioned);
                         foreach (var replicaId in ack.Members)
                         {
                             if (members.TryGetValue(replicaId, out var member))
@@ -138,22 +138,22 @@ namespace Calliope.Replication
                 }
                 pendingAcks = builder.ToImmutable();
             });
-            Receive<Replicator.Invitation>(invitation =>
+            Receive<Invitation>(invitation =>
             {
                 members = members.Add(invitation.ReplicaId, invitation.ReplicatorRef);
                 Context.Watch(invitation.ReplicatorRef);
             });
-            Receive<Replicator.StableReq>(sync =>
+            Receive<StableReq>(sync =>
             {
                 var reply = sync.Versions.Where(ver => latestStableVersion >= ver).ToArray();
-                Sender.Tell(new Replicator.StableRep(reply));
+                Sender.Tell(new StableRep(reply));
             });
-            Receive<Replicator.Subscribe>(subscribe =>
+            Receive<Subscribe<T>>(subscribe =>
             {
                 subscribers = subscribers.Add(subscribe.Ref);
                 if (subscribe.Ack != null) subscribe.Ref.Tell(subscribe.Ack);
             });
-            Receive<Replicator.Unsubscribe>(unsubscribe =>
+            Receive<Unsubscribe>(unsubscribe =>
             {
                 subscribers = subscribers.Remove(unsubscribe.Ref);
                 if (unsubscribe.Ack != null) unsubscribe.Ref.Tell(unsubscribe.Ack);
@@ -166,7 +166,7 @@ namespace Calliope.Replication
             });
 
             resendTask = Context.System.Scheduler
-                .ScheduleTellOnceCancelable(settings.ResendInterval, Self, Replicator.Resend.Instance, ActorRefs.NoSender);
+                .ScheduleTellOnceCancelable(settings.ResendInterval, Self, Resend.Instance, ActorRefs.NoSender);
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace Calliope.Replication
         /// Check and possibly deliver a message if it should be delivered.
         /// </summary>
         /// <returns></returns>
-        private bool TryToCasuallyDeliver(Replicator.Deliver<T> delivery)
+        private bool TryToCasuallyDeliver(Deliver<T> delivery)
         {
             if (ShouldBeDelivered(delivery.Origin, localVersion, delivery.Versioned.Version))
             {

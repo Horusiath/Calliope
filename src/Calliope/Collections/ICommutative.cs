@@ -20,6 +20,6 @@ namespace Calliope.Collections
     {
         TResult GetValue(TCommutative crdt);
         (TCommutative crdt, TOp operation) Prepare();
-        TCommutative Effect(TCommutative, TOp operation);
+        TCommutative Effect(TCommutative crdt, TOp operation);
     }
 }

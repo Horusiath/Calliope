@@ -22,21 +22,21 @@ namespace Calliope.Replication
             localVersion: VClock.Zero, 
             stableVersion: VClock.Zero, 
             remoteVersions: MClock.Empty,
-            pendingDeliveries: ImmutableHashSet<Replicator.Deliver<T>>.Empty, 
-            pendingAcks: ImmutableHashSet<Replicator.PendingAck<T>>.Empty);
+            pendingDeliveries: ImmutableHashSet<Deliver<T>>.Empty, 
+            pendingAcks: ImmutableHashSet<PendingAck<T>>.Empty);
 
         public VClock LocalVersion { get; }
         public VClock StableVersion { get; }
         public MClock RemoteVersions { get; }
-        public ImmutableHashSet<Replicator.Deliver<T>> PendingDeliveries { get; }
-        public ImmutableHashSet<Replicator.PendingAck<T>> PendingAcks { get; }
+        public ImmutableHashSet<Deliver<T>> PendingDeliveries { get; }
+        public ImmutableHashSet<PendingAck<T>> PendingAcks { get; }
 
         public ReplicatorState(
             VClock localVersion,
             VClock stableVersion,
             ImmutableDictionary<ReplicaId, VClock> remoteVersions,
-            ImmutableHashSet<Replicator.Deliver<T>> pendingDeliveries,
-            ImmutableHashSet<Replicator.PendingAck<T>> pendingAcks)
+            ImmutableHashSet<Deliver<T>> pendingDeliveries,
+            ImmutableHashSet<PendingAck<T>> pendingAcks)
         {
             LocalVersion = localVersion;
             StableVersion = stableVersion;
@@ -61,7 +61,7 @@ namespace Calliope.Replication
                 pendingDeliveries: PendingDeliveries,
                 pendingAcks: PendingAcks);
 
-        public ReplicatorState<T> WithPendingAcks(ImmutableHashSet<Replicator.PendingAck<T>> acks) =>
+        public ReplicatorState<T> WithPendingAcks(ImmutableHashSet<PendingAck<T>> acks) =>
             new ReplicatorState<T>(
                 localVersion: LocalVersion,
                 stableVersion: StableVersion,
@@ -69,7 +69,7 @@ namespace Calliope.Replication
                 pendingDeliveries: PendingDeliveries,
                 pendingAcks: acks);
 
-        public ReplicatorState<T> WithPendingDeliveries(ImmutableHashSet<Replicator.Deliver<T>> deliveries) =>
+        public ReplicatorState<T> WithPendingDeliveries(ImmutableHashSet<Deliver<T>> deliveries) =>
             new ReplicatorState<T>(
                 localVersion: LocalVersion,
                 stableVersion: StableVersion,
