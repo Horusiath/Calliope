@@ -30,7 +30,7 @@ namespace Calliope.Replication
             var replicatorRef = Context.Child(topicId);
             if (Equals(replicatorRef, ActorRefs.Nobody))
             {
-                var props = Props.Create(() => new Replicator<T>(topicId, settings));
+                var props = Replicator<T>.Props(topicId, settings);
                 replicatorRef = Context.ActorOf(props, topicId);
             }
 

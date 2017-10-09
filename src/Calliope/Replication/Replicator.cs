@@ -20,6 +20,9 @@ namespace Calliope.Replication
 
     internal sealed class Replicator<T> : ReceiveActor
     {
+        public static Props Props(string replicaId, ReplicatorSettings settings) =>
+            Akka.Actor.Props.Create(() => new Replicator<T>(replicaId, settings)).WithDeploy(Deploy.Local);
+
         private readonly ILoggingAdapter log = Context.GetLogger();
         private readonly Cluster cluster = Cluster.Get(Context.System);
         private readonly ICancelable resendTask;
