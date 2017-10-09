@@ -12,6 +12,7 @@ namespace Calliope.Collections
     /// </summary>
     public class BoundedCounter : ICommutative
     {
-        
+        #region operations
+        #endregion
     }
 }

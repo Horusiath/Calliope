@@ -13,6 +13,8 @@ namespace Calliope
     public sealed class Calliope : IExtension
     {
         public static Calliope Get(ActorSystem system) => system.WithExtension<Calliope, CalliopeProvider>();
+        
+        
 
         public Calliope(ExtendedActorSystem system)
         {

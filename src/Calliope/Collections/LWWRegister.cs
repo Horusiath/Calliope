@@ -17,6 +17,22 @@ namespace Calliope.Collections
     /// <typeparam name="T"></typeparam>
     public class LWWRegister<T> : ICommutative
     {
+        #region operations
+
+        internal struct UpdateOp
+        {
+            public DateTime Timestamp { get; }
+            public T Value { get; }
+
+            public UpdateOp(DateTime timestamp, T value)
+            {
+                Timestamp = timestamp;
+                Value = value;
+            }
+        }
+
+        #endregion
+
         #region comparers
         private sealed class OldestWinsComparer : IComparer<LWWRegister<T>>
         {

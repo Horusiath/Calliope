@@ -14,4 +14,12 @@ namespace Calliope.Collections
     {
         
     }
+
+    public interface ICommutativeContainer<TCommutative, TOp, out TResult>
+        where TCommutative : ICommutative
+    {
+        TResult GetValue(TCommutative crdt);
+        (TCommutative crdt, TOp operation) Prepare();
+        TCommutative Effect(TCommutative, TOp operation);
+    }
 }

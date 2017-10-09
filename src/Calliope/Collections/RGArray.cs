@@ -20,6 +20,34 @@ namespace Calliope.Collections
     /// <typeparam name="T"></typeparam>
     public class RGArray<T> : ICommutative
     {
+        #region operations
+        
+        internal interface IOp { }
+        internal sealed class InsertRightOp : IOp
+        {
+            public Position After { get; }
+            public Position CurrentPosition { get; }
+            public T Value { get; }
+
+            public InsertRightOp(Position after, Position currentPosition, T value)
+            {
+                After = after;
+                CurrentPosition = currentPosition;
+                Value = value;
+            }
+        }
+        internal sealed class DeleteOp : IOp
+        {
+            public Position At { get; }
+
+            public DeleteOp(Position at)
+            {
+                At = at;
+            }
+        }
+
+        #endregion
+
         private readonly ImmutableList<Vertex<T>> vertices;
 
         //TODO: optimize

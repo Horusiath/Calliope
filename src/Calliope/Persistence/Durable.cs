@@ -1,23 +1,15 @@
 ﻿#region copyright
 // -----------------------------------------------------------------------
-//  <copyright file="LSeq.cs" creator="Bartosz Sypytkowski">
+//  <copyright file="Durable.cs" creator="Bartosz Sypytkowski">
 //      Copyright (C) 2017 Bartosz Sypytkowski <b.sypytkowski@gmail.com>
 //  </copyright>
 // -----------------------------------------------------------------------
 #endregion
 
-using System.Collections.Immutable;
-
-namespace Calliope.Collections
+namespace Calliope.Persistence
 {
-    public class LSeq<T> : ICommutative
+    public sealed class Durable<T>
     {
-        #region operations
-
         
-
-        #endregion
-
-        public ImmutableArray<T> Value { get; }
     }
 }

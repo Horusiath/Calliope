@@ -25,9 +25,7 @@ namespace Calliope.Replication
         private readonly ICancelable resendTask;
 
         // settings
-        private readonly TimeSpan checkRetryInterval = TimeSpan.FromSeconds(10);
-        private readonly TimeSpan retryTimeout = TimeSpan.FromSeconds(10);
-        private readonly string role = null;
+        private readonly ReplicatorSettings settings;
         private readonly string replicatorRelativePath;
         private readonly ReplicaId myself;
 
@@ -43,11 +41,13 @@ namespace Calliope.Replication
         private ImmutableHashSet<Replicator.Deliver<T>> pendingDelivery = ImmutableHashSet<Replicator.Deliver<T>>.Empty;
         private ImmutableHashSet<Replicator.PendingAck<T>> pendingAcks = ImmutableHashSet<Replicator.PendingAck<T>>.Empty;
 
-        public Replicator(string replicaId) : this(MurmurHash.StringHash(replicaId)) { }
+        public Replicator(string replicaId, ReplicatorSettings settings) 
+            : this(MurmurHash.StringHash(replicaId), settings) { }
 
-        public Replicator(ReplicaId myself)
+        public Replicator(ReplicaId myself, ReplicatorSettings settings)
         {
             this.myself = myself;
+            this.settings = settings;
             replicatorRelativePath = Self.Path.ToStringWithoutAddress();
 
             Receive<ClusterEvent.MemberUp>(up =>
@@ -124,7 +124,7 @@ namespace Calliope.Replication
                 var builder = pendingAcks.ToBuilder();
                 foreach (var ack in pendingAcks)
                 {
-                    if (now - ack.Timestamp > retryTimeout)
+                    if (now - ack.Timestamp > settings.RetryTimeout)
                     {
                         builder.Remove(ack);
                         var send = new Replicator.Send<T>(myself, myself, ack.Versioned);
@@ -166,7 +166,7 @@ namespace Calliope.Replication
             });
 
             resendTask = Context.System.Scheduler
-                .ScheduleTellOnceCancelable(checkRetryInterval, Self, Replicator.Resend.Instance, ActorRefs.NoSender);
+                .ScheduleTellOnceCancelable(settings.ResendInterval, Self, Replicator.Resend.Instance, ActorRefs.NoSender);
         }
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace Calliope.Replication
             base.PostStop();
         }
 
-        private bool HasRole(Member member) => string.IsNullOrEmpty(role) || member.Roles.Contains(role);
+        private bool HasRole(Member member) => string.IsNullOrEmpty(settings.Role) || member.Roles.Contains(settings.Role);
 
         #region tagged reliable casual broadcast
 
@@ -221,21 +221,21 @@ namespace Calliope.Replication
         //TODO: move it into easily testable class
         public static bool ShouldBeDelivered(ReplicaId origin, VClock local, VClock remote)
         {
-            var thisVer = local.Value;
-            foreach ((var key, var value) in remote.Value)
+            var lver = local.Value;
+            foreach ((var rkey, var rtime) in remote.Value)
             {
-                if (thisVer.TryGetValue(key, out var thisVal))
+                if (lver.TryGetValue(rkey, out var ltime))
                 {
-                    if (key == origin)
+                    if (rkey == origin)
                     {
-                        if (value != thisVal + 1) return false;
+                        if (rtime != ltime + 1) return false;
                     }
                     else
                     {
-                        if (value > thisVal) return false;
+                        if (rtime > ltime) return false;
                     }
                 }
-                else if (!(key == origin && value == 1))
+                else if (!(rkey == origin && rtime == 1))
                 {
                     return false;
                 }

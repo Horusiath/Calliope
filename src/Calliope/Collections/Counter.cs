@@ -15,6 +15,20 @@ namespace Calliope.Collections
     /// </summary>
     public sealed class Counter : ICommutative
     {
+        #region operations
+
+        internal struct UpdateOp
+        {
+            public UpdateOp(long value)
+            {
+                Value = value;
+            }
+
+            public long Value { get; }
+        }
+
+        #endregion
+
         public Counter(long value)
         {
             Value = value;

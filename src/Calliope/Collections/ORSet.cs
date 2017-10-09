@@ -13,7 +13,30 @@ namespace Calliope.Collections
     /// <typeparam name="T"></typeparam>
     public class ORSet<T> : ICommutative
     {
-        
+        #region operations
+
+        internal enum OpType
+        {
+            Add = 1,
+            Remove = 2
+        }
+
+        internal struct UpdateOp
+        {
+            public OpType Type { get; }
+            public T Value { get; }
+
+            public UpdateOp(OpType type, T value)
+            {
+                Type = type;
+                Value = value;
+            }
+
+            public static UpdateOp Add(T value) => new UpdateOp(OpType.Add, value);
+            public static UpdateOp Remove(T value) => new UpdateOp(OpType.Remove, value);
+        }
+
+        #endregion
     }
 
     /// <summary>
