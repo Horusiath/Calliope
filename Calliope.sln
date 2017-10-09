@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.12
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{26CD2F4D-CA23-4682-B301-DDC936E8A66E}"
 EndProject
@@ -21,7 +21,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope.Sql", "src\Calliop
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope.Kafka", "src\Calliope.Kafka\Calliope.Kafka.csproj", "{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Azure", "src\Calliope.Azure\Calliope.Azure.csproj", "{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Calliope.Azure", "src\Calliope.Azure\Calliope.Azure.csproj", "{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{459FD788-5B48-45E1-9756-4DC7700C34AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calliope.Tests.MultiNode", "src\Calliope.Tests.MultiNode\Calliope.Tests.MultiNode.csproj", "{BEDE655F-6FBF-44FB-B4EA-6573F29EA397}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalliopeSamples", "samples\CalliopeSamples\CalliopeSamples.csproj", "{B199C8F8-76A0-4636-9420-151C20CA2FF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lighthouse", "samples\Lighthouse\Lighthouse.csproj", "{4ABFC4F9-499B-4AB8-9EF7-558CC3393C2E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +57,18 @@ Global
 		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEDE655F-6FBF-44FB-B4EA-6573F29EA397}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEDE655F-6FBF-44FB-B4EA-6573F29EA397}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEDE655F-6FBF-44FB-B4EA-6573F29EA397}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEDE655F-6FBF-44FB-B4EA-6573F29EA397}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B199C8F8-76A0-4636-9420-151C20CA2FF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B199C8F8-76A0-4636-9420-151C20CA2FF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B199C8F8-76A0-4636-9420-151C20CA2FF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B199C8F8-76A0-4636-9420-151C20CA2FF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ABFC4F9-499B-4AB8-9EF7-558CC3393C2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ABFC4F9-499B-4AB8-9EF7-558CC3393C2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ABFC4F9-499B-4AB8-9EF7-558CC3393C2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ABFC4F9-499B-4AB8-9EF7-558CC3393C2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +79,9 @@ Global
 		{586578EF-089E-4AE1-A467-2BE13FB87FD3} = {E55921B4-2C67-42A5-A1C4-86E653A7D8F2}
 		{BAD033A1-2B7A-48AC-B5FB-2198EFA73FAD} = {E55921B4-2C67-42A5-A1C4-86E653A7D8F2}
 		{FE5A91DD-ABC6-4A9C-B670-83B2E6E134DE} = {E55921B4-2C67-42A5-A1C4-86E653A7D8F2}
+		{BEDE655F-6FBF-44FB-B4EA-6573F29EA397} = {26CD2F4D-CA23-4682-B301-DDC936E8A66E}
+		{B199C8F8-76A0-4636-9420-151C20CA2FF3} = {459FD788-5B48-45E1-9756-4DC7700C34AB}
+		{4ABFC4F9-499B-4AB8-9EF7-558CC3393C2E} = {459FD788-5B48-45E1-9756-4DC7700C34AB}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6947D178-0C95-4193-9F5D-04DA104E5084}

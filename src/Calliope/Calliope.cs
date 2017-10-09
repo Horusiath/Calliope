@@ -29,4 +29,9 @@ namespace Calliope
             return new Calliope(system);
         }
     }
+
+    public static class CalliopeExtensions
+    {
+        public static Calliope GetCalliope(this ActorSystem system) => Calliope.Get(system);
+    }
 }
