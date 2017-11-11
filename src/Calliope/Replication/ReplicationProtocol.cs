@@ -17,7 +17,7 @@ namespace Calliope.Replication
     using ReplicaId = Int32;
 
     /// <summary>
-    /// An invitation message send between <see cref="Replicator{T}"/> actors to establish
+    /// An invitation message send between <see cref="ReplicatorActorActor{T}"/> actors to establish
     /// edges in replication graph.
     /// </summary>
     public sealed class Invitation

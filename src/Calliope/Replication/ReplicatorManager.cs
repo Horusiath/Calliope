@@ -11,7 +11,7 @@ using Akka.Actor;
 namespace Calliope.Replication
 {
     /// <summary>
-    /// A parent actor for all <see cref="Replicator{T}"/> classes. Replicators are dedicated
+    /// A parent actor for all <see cref="ReplicatorActorActor{T}"/> classes. Replicators are dedicated
     /// to replicate messages comming within a context of a particular topic.
     /// </summary>
     internal sealed class ReplicatorManager : ReceiveActor
@@ -30,7 +30,7 @@ namespace Calliope.Replication
             var replicatorRef = Context.Child(topicId);
             if (Equals(replicatorRef, ActorRefs.Nobody))
             {
-                var props = Replicator<T>.Props(topicId, settings);
+                var props = ReplicatorActor<T>.Props(topicId, settings);
                 replicatorRef = Context.ActorOf(props, topicId);
             }
 

@@ -6,19 +6,38 @@
 // -----------------------------------------------------------------------
 #endregion
 
+using Akka;
 using Akka.Actor;
+using Akka.Streams.Dsl;
+using Calliope.Replication;
 
 namespace Calliope
 {
     public sealed class Calliope : IExtension
     {
         public static Calliope Get(ActorSystem system) => system.WithExtension<Calliope, CalliopeProvider>();
-        
-        
+
+        private readonly ExtendedActorSystem system;
 
         public Calliope(ExtendedActorSystem system)
         {
-            
+            this.system = system;
+        }
+
+        public IActorRef TopicRef<T>(string topic)
+        {
+            var replicaId = system.Provider.DefaultAddress.ToString() + topic;
+            return system.ActorOf(ReplicatorActor<T>.Props(replicaId, ReplicatorSettings.Default.WithRole("calliope")));
+        }
+
+        public Flow<T, Versioned<T>, NotUsed> Topic<T>(string topic)
+        {
+            return Flow.FromGraph(new ReplicatorStage<T>());
+        }
+
+        public Sink<T, NotUsed> TopicPublisher<T>(string topic)
+        {
+            return Topic<T>(topic).To(Sink.Ignore<Versioned<T>>());
         }
     }
 
@@ -28,10 +47,5 @@ namespace Calliope
         {
             return new Calliope(system);
         }
-    }
-
-    public static class CalliopeExtensions
-    {
-        public static Calliope GetCalliope(this ActorSystem system) => Calliope.Get(system);
     }
 }

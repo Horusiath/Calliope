@@ -11,7 +11,7 @@ using System;
 namespace Calliope.Replication
 {
     /// <summary>
-    /// Settings used by the <see cref="Replicator{T}"/> actor.
+    /// Settings used by the <see cref="ReplicatorActorActor{T}"/> actor.
     /// </summary>
     public class ReplicatorSettings
     {
@@ -45,6 +45,23 @@ namespace Calliope.Replication
             ResendInterval = resendInterval;
             RetryTimeout = retryTimeout;
             Role = role;
+        }
+
+        public ReplicatorSettings WithRole(string role)
+        {
+            if (string.IsNullOrEmpty(role)) throw new ArgumentNullException(nameof(role));
+
+            return new ReplicatorSettings(ResendInterval, RetryTimeout, role);
+        }
+
+        public ReplicatorSettings WithRetryTimeout(TimeSpan retryTimeout)
+        {
+            return new ReplicatorSettings(ResendInterval, retryTimeout, Role);
+        }
+
+        public ReplicatorSettings WithResendInterval(TimeSpan resendInterval)
+        {
+            return new ReplicatorSettings(resendInterval, RetryTimeout, Role);
         }
     }
 }
